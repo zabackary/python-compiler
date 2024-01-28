@@ -1,3 +1,0 @@
-[submodule "python_minifier"]
-	path = python_minifier
-	url = https://github.com/dflook/python-minifier
