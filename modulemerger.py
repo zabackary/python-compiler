@@ -1,8 +1,8 @@
 import ast
+import sys
 
-import exporthelper
-import graph
-from processimportedmodule import ProcessedModule, process_imported_module
+from . import exporthelper, graph
+from .processimportedmodule import ProcessedModule, process_imported_module
 
 
 class ModuleMerger:
@@ -31,8 +31,14 @@ class ModuleMerger:
                     dependency_tree_edges[module.path].append(
                         processed_module.path)
                     dependency_queue.append(processed_module)
-        dependencies = list(reversed(graph.Graph(
-            dependency_tree_edges).topological_sort()))
+        dependencies = []
+        try:
+            dependencies = list(reversed(graph.Graph(
+                dependency_tree_edges).topological_sort()))
+        except graph.TopologicalSortError:
+            print(
+                "python-module-merger: error: failed to compile due to circular dependencies")
+            sys.exit(1)
         output: list[ast.AST] = []
         output.append(ast.Expr(
             ast.Constant(
