@@ -7,6 +7,7 @@ from importlib import util as import_utils
 from .exporthelper import EXPORT_HELPER_NAME
 from .module_import_finder import (Import, ImportTransformer, ImportVisitor,
                                    purify_identifier)
+from .options import ModuleMergerOptions
 
 
 class ModuleUniqueIdentifierGenerator:
@@ -44,8 +45,10 @@ class ProcessedModule:
     imports: list[Import]
     path: str
     name_generator: ModuleUniqueIdentifierGenerator
+    options: ModuleMergerOptions
 
-    def __init__(self, source: str | None, path: str, imported_name: str) -> None:
+    def __init__(self, source: str | None, path: str, imported_name: str, options: ModuleMergerOptions) -> None:
+        self.options = options
         if path == "built-in":
             self.name = f"built-in:{imported_name}"
         elif imported_name == "__main__":
@@ -60,7 +63,8 @@ class ProcessedModule:
             self.name, self.path)
         if self.module is not None:
             for item in ImportVisitor.find_imports(self.module, self.path):
-                self.imports.append(item)
+                if item.module not in self.options.ignore_imports:
+                    self.imports.append(item)
 
     def generate_factory_ast(self) -> ast.FunctionDef | ast.Import:
         if self.module is None:
@@ -99,7 +103,7 @@ class ProcessedModule:
             transformed_module = ImportTransformer(
                 self.imports,
                 argument_import_names,
-                self.name).visit(self.module)
+                self.name, self.options).visit(self.module)
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)
@@ -153,18 +157,17 @@ class ProcessedModule:
         )
 
 
-def process_imported_module(module: str, context_path: str):
+def process_imported_module(module: str, context_path: str, options: ModuleMergerOptions):
     old_path = sys.path.copy()
     # this assumes that the directory of this current file is always the first
     # search path
-    # TODO: actually check where it is
     sys.path[0] = os.path.dirname(context_path)
     spec = import_utils.find_spec(module)
     sys.path = old_path
     if spec is None or spec.origin is None:
         raise ImportError(f"failed to resolve import {module}")
-    elif spec.origin == "built-in" or module in sys.stdlib_module_names:
-        return ProcessedModule(None, "built-in", module)
+    elif spec.origin == "built-in" or module in options.ignore_imports or module in sys.stdlib_module_names:
+        return ProcessedModule(None, "built-in", module, options)
     else:
         with open(spec.origin, "r") as file:
-            return ProcessedModule(file.read(), spec.origin, module)
+            return ProcessedModule(file.read(), spec.origin, module, options)

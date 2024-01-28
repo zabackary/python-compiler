@@ -4,6 +4,8 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
+from .options import ModuleMergerOptions
+
 python_invalid_character_re = re.compile(r"[^A-Za-z0-9_]")
 
 
@@ -69,11 +71,13 @@ class ImportTransformer(ast.NodeTransformer):
     imports: list[Import]
     argument_import_names: list[str]
     name: str
+    options: ModuleMergerOptions
 
-    def __init__(self, imports: list[Import], argument_import_names: list[str], name: str) -> None:
+    def __init__(self, imports: list[Import], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name
+        self.options = options
         super().__init__()
 
     def _resolve_module_argument_identifier(self, module_name: str) -> str:
@@ -86,21 +90,27 @@ class ImportTransformer(ast.NodeTransformer):
     def visit_Import(self, node: ast.Import) -> Any:
         output: list[ast.Assign | ast.Import] = []
         for alias in node.names:
-            resolved_argument = self._resolve_module_argument_identifier(
-                alias.name)
-            output.append(ast.Assign(
-                targets=[
-                    ast.Name(
-                        id=alias.asname if alias.asname is not None else alias.name,
-                        ctx=ast.Store()
-                    )
-                ],
-                value=ast.Name(id=resolved_argument, ctx=ast.Load())
-            ))
+            if alias.name in self.options.ignore_imports:
+                # don't process, just ignore
+                output.append(ast.Import(names=[alias]))
+            else:
+                resolved_argument = self._resolve_module_argument_identifier(
+                    alias.name)
+                output.append(ast.Assign(
+                    targets=[
+                        ast.Name(
+                            id=alias.asname if alias.asname is not None else alias.name,
+                            ctx=ast.Store()
+                        )
+                    ],
+                    value=ast.Name(id=resolved_argument, ctx=ast.Load())
+                ))
         return output
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
         module = node.module
+        if node.module in self.options.ignore_imports:
+            return node
         if module is None:
             raise Exception(
                 "failed to transform module: ImportFrom module is None")
