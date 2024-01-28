@@ -4,6 +4,7 @@ import os
 import sys
 
 from .graph import TopologicalSortError
+from .minify import minify
 from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
 
@@ -40,6 +41,8 @@ def main(argv: list[str]):
     parser.add_argument("--ignore-imports", nargs="+",
                         default=[],
                         help="modules for which to ignore transforming imports for (i.e., leave them untouched)")
+    parser.add_argument("-m", "--minify", action=argparse.BooleanOptionalAction,
+                        help="minifies the result")
     parser.add_argument("-j", "--json", action=argparse.BooleanOptionalAction,
                         help="outputs messages as json")
     args = parser.parse_args(argv)
@@ -54,6 +57,8 @@ def main(argv: list[str]):
                     ignore_imports=args.ignore_imports
                 ))
             merged = mm.merge()
+            if args.minify:
+                merged = minify(merged)
             if args.json:
                 args.output.write(json.dumps({
                     "output": merged
