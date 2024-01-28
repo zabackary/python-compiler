@@ -1,6 +1,6 @@
 import ast
+import hashlib
 import os
-import random
 import sys
 from importlib import util as import_utils
 
@@ -12,10 +12,13 @@ from .module_import_finder import (Import, ImportTransformer, ImportVisitor,
 class ModuleUniqueIdentifierGenerator:
     module_name: str
     unique_module_name: str
+    id: str
 
-    def __init__(self, module_name: str) -> None:
+    def __init__(self, module_name: str, module_path: str) -> None:
         self.module_name = module_name
-        self.unique_module_name = f"{purify_identifier(module_name)}_{'%016x' % random.randrange(16**16)}"
+        self.id = hashlib.md5(module_path.encode(),
+                              usedforsecurity=False).hexdigest()
+        self.unique_module_name = f"{purify_identifier(self.module_name)}_{self.id}"
 
     def get_factory(self):
         return f"__generated_factory_{self.unique_module_name}__"
@@ -53,7 +56,8 @@ class ProcessedModule:
         self.module = ast.parse(
             source, self.name) if source is not None else None
         self.imports = []
-        self.name_generator = ModuleUniqueIdentifierGenerator(self.name)
+        self.name_generator = ModuleUniqueIdentifierGenerator(
+            self.name, self.path)
         if self.module is not None:
             for item in ImportVisitor.find_imports(self.module, self.path):
                 self.imports.append(item)

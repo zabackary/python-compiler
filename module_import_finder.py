@@ -1,5 +1,5 @@
 import ast
-import random
+import hashlib
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -21,7 +21,9 @@ class Import:
     is_module_import: bool
 
     def generate_unique_identifier(self):
-        return f"__generated_import_{purify_identifier(self.module)}_{'%016x' % random.randrange(16**16)}__"
+        id = hashlib.md5(f"{self.module}{self.module_alias}{self.context_path}".encode(
+        ), usedforsecurity=False).hexdigest()
+        return f"__generated_import_{purify_identifier(self.module)}_{id}__"
 
 
 class ImportVisitor(ast.NodeVisitor):
