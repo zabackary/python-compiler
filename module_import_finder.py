@@ -28,6 +28,14 @@ class Import:
         return f"__generated_import_{purify_identifier(self.module)}_{id}__"
 
 
+class AsteriskImportError(Exception):
+    pass
+
+
+class TransformError(Exception):
+    pass
+
+
 class ImportVisitor(ast.NodeVisitor):
     imports: list[Import]
     context_path: str
@@ -112,12 +120,14 @@ class ImportTransformer(ast.NodeTransformer):
         if node.module in self.options.ignore_imports:
             return node
         if module is None:
-            raise Exception(
-                "failed to transform module: ImportFrom module is None")
+            raise TransformError(
+                f"failed to transform module {self.name}: ImportFrom module is None")
         resolved_argument = self._resolve_module_argument_identifier(
             module)
         output: list[ast.Assign | ast.Import] = []
         for alias in node.names:
+            if alias.name == "*":
+                raise AsteriskImportError(self.name)
             output.append(ast.Assign(
                 targets=[
                     ast.Name(

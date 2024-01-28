@@ -5,6 +5,7 @@ import sys
 
 from .graph import TopologicalSortError
 from .minify import minify
+from .module_import_finder import AsteriskImportError, TransformError
 from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
 
@@ -12,12 +13,14 @@ DEFAULT_FILE_NAME = "__stdin__.py"
 PROG_NAME = "python-module-merger"
 ERRORS = {
     "circular-deps": "failed to compile due to circular dependencies",
-    "recursion": "failed to compile due to excessive amount of nested modules"
+    "recursion": "failed to compile due to excessive amount of nested modules",
+    "asterisk-import": "failed to compile because of asterisk import in %s",
+    "transform": "failed to transform module: %s"
 }
 
 
-def format_error(name: str, output_json: bool = False):
-    msg = ERRORS[name]
+def format_error(name: str, output_json: bool = False, args: tuple[str, ...] = ()):
+    msg = ERRORS[name] % args
     if output_json:
         return json.dumps({
             "error": True,
@@ -46,7 +49,6 @@ def main(argv: list[str]):
     parser.add_argument("-j", "--json", action=argparse.BooleanOptionalAction,
                         help="outputs messages as json")
     args = parser.parse_args(argv)
-    print(args)
     with args.input as input:
         try:
             mm = ModuleMerger(
@@ -72,6 +74,14 @@ def main(argv: list[str]):
         except RecursionError:
             print(
                 format_error("recursion", args.json))
+            sys.exit(1)
+        except AsteriskImportError as e:
+            print(
+                format_error("asterisk-import", args.json, e.args))
+            sys.exit(1)
+        except TransformError as e:
+            print(
+                format_error("transform", args.json, e.args))
             sys.exit(1)
 
 
