@@ -69,19 +69,23 @@ def main(argv: list[str]):
                 args.output.write(merged)
         except TopologicalSortError:
             print(
-                format_error("circular-deps", args.json))
+                format_error("circular-deps", args.json),
+                file=sys.stderr)
             sys.exit(1)
         except RecursionError:
             print(
-                format_error("recursion", args.json))
+                format_error("recursion", args.json),
+                file=sys.stderr)
             sys.exit(1)
         except AsteriskImportError as e:
             print(
-                format_error("asterisk-import", args.json, e.args))
+                format_error("asterisk-import", args.json, e.args),
+                file=sys.stderr)
             sys.exit(1)
         except TransformError as e:
             print(
-                format_error("transform", args.json, e.args))
+                format_error("transform", args.json, e.args),
+                file=sys.stderr)
             sys.exit(1)
 
 
