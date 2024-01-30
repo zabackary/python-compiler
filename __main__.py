@@ -10,7 +10,7 @@ from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
 
 DEFAULT_FILE_NAME = "__stdin__.py"
-PROG_NAME = "python-module-merger"
+PROG_NAME = "python-compiler"
 ERRORS = {
     "circular-deps": "failed to compile due to circular dependencies",
     "recursion": "failed to compile due to excessive amount of nested modules",
@@ -34,7 +34,7 @@ def format_error(name: str, output_json: bool = False, args: tuple[str, ...] = (
 def main(argv: list[str]):
     parser = argparse.ArgumentParser(
         prog=PROG_NAME,
-        description="Merges Python modules together and outputs to stdout.")
+        description="Compiles/merges Python files.")
     parser.add_argument("-i", "--input", required=True,
                         type=argparse.FileType('r'),
                         help="the input file, can be - for stdin")
