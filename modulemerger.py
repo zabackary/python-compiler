@@ -58,10 +58,4 @@ class ModuleMerger:
             body=output,
             type_ignores=[]
         )
-        # imports = module_import_finder.ImportVisitor.find_imports(self.module)
-        # print(imports)
-        # for item in imports:
-        #     processed = process_imported_module(item, self.path)
-        #     if processed != None:
-        #         print(ast.dump(processed.generate_factory_ast(), indent=4))
         return ast.unparse(ast.fix_missing_locations(output_ast))
