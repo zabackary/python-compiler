@@ -5,8 +5,8 @@ import sys
 from importlib import util as import_utils
 
 from .exporthelper import EXPORT_HELPER_NAME
-from .module_import_finder import (Import, ImportTransformer, ImportVisitor,
-                                   purify_identifier)
+from .importtransformer import (Import, ImportTransformer, ImportVisitor,
+                                purify_identifier)
 from .options import ModuleMergerOptions
 
 

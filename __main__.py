@@ -4,8 +4,8 @@ import os
 import sys
 
 from .graph import TopologicalSortError
+from .importtransformer import AsteriskImportError, TransformError
 from .minify import minify
-from .module_import_finder import AsteriskImportError, TransformError
 from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
 
