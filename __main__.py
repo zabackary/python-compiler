@@ -4,10 +4,10 @@ import os
 import sys
 
 from .graph import TopologicalSortError
-from .importtransformer import AsteriskImportError, TransformError
 from .minify import minify
 from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
+from .transformer import AsteriskImportError, TransformError
 
 DEFAULT_FILE_NAME = "__stdin__.py"
 PROG_NAME = "python-compiler"

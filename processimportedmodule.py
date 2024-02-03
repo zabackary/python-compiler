@@ -5,9 +5,9 @@ import sys
 from importlib import util as import_utils
 
 from .exporthelper import EXPORT_HELPER_NAME
-from .importtransformer import (Import, ImportTransformer, ImportVisitor,
-                                purify_identifier)
 from .options import ModuleMergerOptions
+from .transformer import (Import, ImportVisitor, ModuleTransformer,
+                          purify_identifier)
 
 
 class ModuleUniqueIdentifierGenerator:
@@ -100,7 +100,7 @@ class ProcessedModule:
             for item in self.imports:
                 argument_import_names.append(item.generate_unique_identifier())
 
-            transformed_module = ImportTransformer(
+            transformed_module = ModuleTransformer(
                 self.imports,
                 argument_import_names,
                 self.name, self.options).visit(self.module)

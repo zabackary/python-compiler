@@ -75,7 +75,7 @@ class ImportVisitor(ast.NodeVisitor):
         return visitor.imports
 
 
-class ImportTransformer(ast.NodeTransformer):
+class ModuleTransformer(ast.NodeTransformer):
     imports: list[Import]
     argument_import_names: list[str]
     name: str
