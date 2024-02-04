@@ -7,7 +7,7 @@ from importlib import util as import_utils
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import ModuleMergerOptions
 from .transformer import (Import, ImportVisitor, ModuleTransformer,
-                          purify_identifier)
+                          TransformError, purify_identifier)
 
 
 class ModuleUniqueIdentifierGenerator:
@@ -100,10 +100,14 @@ class ProcessedModule:
             for item in self.imports:
                 argument_import_names.append(item.generate_unique_identifier())
 
-            transformed_module = ModuleTransformer(
-                self.imports,
-                argument_import_names,
-                self.name, self.options).visit(self.module)
+            try:
+                transformed_module = ModuleTransformer(
+                    self.imports,
+                    argument_import_names,
+                    self.name, self.options).visit(self.module)
+            except Exception as err:
+                raise TransformError(
+                    f"failed to transform module at {self.path}: {str(err)}")
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)

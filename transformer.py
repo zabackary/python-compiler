@@ -1,6 +1,7 @@
 import ast
 import hashlib
 import re
+from _ast import Assign, Global, Module, Set
 from dataclasses import dataclass
 from typing import Any
 
@@ -33,6 +34,14 @@ class AsteriskImportError(Exception):
 
 
 class TransformError(Exception):
+    pass
+
+
+class AssignmentToConstantError(Exception):
+    pass
+
+
+class GlobalError(Exception):
     pass
 
 
@@ -81,11 +90,14 @@ class ModuleTransformer(ast.NodeTransformer):
     name: str
     options: ModuleMergerOptions
 
+    top_level_statements: list[ast.stmt]
+
     def __init__(self, imports: list[Import], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name
         self.options = options
+        self.top_level_statements = []
         super().__init__()
 
     def _resolve_module_argument_identifier(self, module_name: str) -> str:
@@ -93,7 +105,7 @@ class ModuleTransformer(ast.NodeTransformer):
             if item.module == module_name:
                 return self.argument_import_names[i]
         raise Exception(
-            "failed to transform module: can't find import in mapping")
+            "can't find import in mapping")
 
     def visit_Import(self, node: ast.Import) -> Any:
         output: list[ast.Assign | ast.Import] = []
@@ -121,7 +133,7 @@ class ModuleTransformer(ast.NodeTransformer):
             return node
         if module is None:
             raise TransformError(
-                f"failed to transform module {self.name}: ImportFrom module is None")
+                f"ImportFrom module is None on line {node.lineno}")
         resolved_argument = self._resolve_module_argument_identifier(
             module)
         output: list[ast.Assign | ast.Import] = []
@@ -147,6 +159,36 @@ class ModuleTransformer(ast.NodeTransformer):
         return output
 
     def visit_Name(self, node: ast.Name) -> Any:
-        if node.id == "__name__" and isinstance(node.ctx, ast.Load):
-            return ast.Constant(value=self.name)
+        if isinstance(node.ctx, ast.Load):
+            if node.id == "__name__":
+                return ast.Constant(value=self.name)
+            elif node.id in self.options.compile_time_constants:
+                return ast.Constant(value=self.options.compile_time_constants[node.id])
         return node
+
+    def visit_Module(self, node: Module) -> Any:
+        self.top_level_statements = node.body
+        self.generic_visit(node)
+        return node
+
+    def visit_Assign(self, node: ast.Assign) -> Any:
+        top_level = node in self.top_level_statements
+        # raises errors if a constant is assigned to outside of the top-level
+        # if it's top-level, silently deletes it
+        for target in node.targets.copy():
+            if (isinstance(target, ast.Name)
+                and isinstance(target.ctx, ast.Store)
+                    and target.id in self.options.compile_time_constants):
+                if top_level:
+                    node.targets.remove(target)
+                else:
+                    raise AssignmentToConstantError(
+                        f"assignment to compile-time constant '{target.id}' on line {target.lineno} col {target.col_offset}")
+        # delete the assignment if there's nothing it's assigning to
+        if len(node.targets) == 0:
+            return None
+        return node
+
+    def visit_Global(self, node: Global) -> Any:
+        raise GlobalError(
+            f"global statements aren't supported on line {node.lineno} col {node.col_offset}")
