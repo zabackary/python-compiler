@@ -104,8 +104,8 @@ class ModuleTransformer(ast.NodeTransformer):
         for i, item in enumerate(self.imports):
             if item.module == module_name:
                 return self.argument_import_names[i]
-        raise Exception(
-            "can't find import in mapping")
+        raise TransformError(
+            f"can't find '{module_name}' import in mapping")
 
     def visit_Import(self, node: ast.Import) -> Any:
         output: list[ast.Assign | ast.Import] = []
@@ -133,7 +133,11 @@ class ModuleTransformer(ast.NodeTransformer):
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
         module = node.module
         if node.module in self.options.ignore_imports:
+            # don't process
             return node
+        elif node.module in self.options.remove_imports:
+            # don't emit anything
+            return None
         if module is None:
             raise TransformError(
                 f"ImportFrom module is None on line {node.lineno}")

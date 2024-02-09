@@ -170,7 +170,10 @@ def process_imported_module(module: str, context_path: str, options: ModuleMerge
     sys.path = old_path
     if spec is None or spec.origin is None:
         raise ImportError(f"failed to resolve import {module}")
-    elif spec.origin == "built-in" or module in options.ignore_imports or module in sys.stdlib_module_names:
+    elif (spec.origin == "built-in"
+          or module in options.ignore_imports
+          or module in options.remove_imports
+          or module in sys.stdlib_module_names):
         return ProcessedModule(None, "built-in", module, options)
     else:
         with open(spec.origin, "r") as file:
