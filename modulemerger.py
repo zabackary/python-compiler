@@ -37,10 +37,13 @@ class ModuleMerger:
         dependencies = list(reversed(graph.Graph(
             dependency_tree_edges).topological_sort()))
         output: list[ast.AST] = []
-        output.append(ast.Expr(
-            ast.Constant(
-                value=self.options.docstring)
-        ))
+        if self.options.docstring != None:
+            output.append(ast.Expr(
+                ast.Constant(
+                    value=self.options.docstring)
+            ))
+        if self.options.prelude != None:
+            output.extend(ast.parse(self.options.prelude, mode="exec").body)
         output.append(exporthelper.get_export_helper())
         modules: list[ast.AST] = []
         for dependency in dependencies:

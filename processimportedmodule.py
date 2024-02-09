@@ -63,7 +63,7 @@ class ProcessedModule:
             self.name, self.path)
         if self.module is not None:
             for item in ImportVisitor.find_imports(self.module, self.path):
-                if item.module not in self.options.ignore_imports:
+                if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
                     self.imports.append(item)
 
     def generate_factory_ast(self) -> ast.FunctionDef | ast.Import:

@@ -113,6 +113,9 @@ class ModuleTransformer(ast.NodeTransformer):
             if alias.name in self.options.ignore_imports:
                 # don't process, just ignore
                 output.append(ast.Import(names=[alias]))
+            elif alias.name in self.options.remove_imports:
+                # don't emit removed imports
+                pass
             else:
                 resolved_argument = self._resolve_module_argument_identifier(
                     alias.name)
