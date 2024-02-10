@@ -15,3 +15,5 @@ class ModuleMergerOptions:
                              | Literal["class"]) = "dict"
     export_names_mode: (Literal["locals"]
                         | Literal["static"]) = "locals"
+    short_generated_names: bool = False
+    hash_length: int = 8

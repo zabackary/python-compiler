@@ -16,20 +16,34 @@ CLASS_EXPORT_CLASS_NAME = "exports"
 class ModuleUniqueIdentifierGenerator:
     unique_module_name: str
     id: str
+    minified: bool
 
-    def __init__(self, module_name: str, module_path: str) -> None:
+    def __init__(self, module_name: str, module_path: str, minified: bool, hash_length: int) -> None:
         self.id = hashlib.md5(module_path.encode(),
-                              usedforsecurity=False).hexdigest()[:8]
-        self.unique_module_name = f"{purify_identifier(module_name)}_{self.id}"
+                              usedforsecurity=False).hexdigest()[:hash_length]
+        self.minified = minified
+        if self.minified:
+            self.unique_module_name = self.id
+        else:
+            self.unique_module_name = f"{purify_identifier(module_name)}_{self.id}"
 
     def get_factory(self):
-        return f"__generated_factory_{self.unique_module_name}__"
+        if self.minified:
+            return f"f{self.unique_module_name}"
+        else:
+            return f"__generated_factory_{self.unique_module_name}__"
 
     def get_evaluated_factory(self):
-        return f"__generated_module_{self.unique_module_name}__"
+        if self.minified:
+            return f"m{self.unique_module_name}"
+        else:
+            return f"__generated_module_{self.unique_module_name}__"
 
     def get_internal_name(self, name: str):
-        return f"__generated_{name}_{self.unique_module_name}__"
+        if self.minified:
+            return f"{name}{self.unique_module_name}"
+        else:
+            return f"__generated_{name}_{self.unique_module_name}__"
 
     def get_export_property_name(self, name: str):
         return self.get_internal_name(f"export_{name}")
@@ -56,7 +70,7 @@ class ProcessedModule:
             source, self.name) if source is not None else None
         self.imports = []
         self.name_generator = ModuleUniqueIdentifierGenerator(
-            self.name, self.path)
+            self.name, self.path, options.short_generated_names, options.hash_length)
         if self.module is not None:
             for item in ImportVisitor.find_imports(self.module, self.path):
                 if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
@@ -125,7 +139,8 @@ class ProcessedModule:
         else:
             argument_import_names: list[str] = []
             for item in self.imports:
-                argument_import_names.append(item.generate_unique_identifier())
+                argument_import_names.append(item.generate_unique_identifier(
+                    self.options.short_generated_names, self.options.hash_length))
 
             try:
                 transformed_module: ast.Module = ModuleTransformer(

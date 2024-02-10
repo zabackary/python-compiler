@@ -23,10 +23,13 @@ class Import:
     is_asterisk_import: bool
     is_module_import: bool
 
-    def generate_unique_identifier(self):
+    def generate_unique_identifier(self, minified: bool, hash_length: int):
         id = hashlib.md5(f"{self.module}{self.module_alias}{self.context_path}".encode(
-        ), usedforsecurity=False).hexdigest()
-        return f"__generated_import_{purify_identifier(self.module)}_{id}__"
+        ), usedforsecurity=False).hexdigest()[:hash_length]
+        if minified:
+            return f"i{id}"
+        else:
+            return f"__generated_import_{purify_identifier(self.module)}_{id}__"
 
 
 class AsteriskImportError(Exception):

@@ -70,6 +70,10 @@ def main(argv: list[str]):
     parser.add_argument("--docstring", action=argparse.BooleanOptionalAction,
                         default=True,
                         help="puts a generated docstring at the top of the module. added by default")
+    parser.add_argument("--module-hash-length",
+                        type=int,
+                        default=8,
+                        help="the length of the hash used for making modules unique")
     parser.add_argument("--export-dictionary-mode",
                         default="dict",
                         choices=["dict", "munch", "class"],
@@ -102,6 +106,8 @@ def main(argv: list[str]):
                     prelude=args.prelude,
                     export_dictionary_mode=args.export_dictionary_mode,
                     export_names_mode=args.export_names_mode,
+                    short_generated_names=args.minify,
+                    hash_length=args.module_hash_length
                 ))
             merged = mm.merge()
             if args.minify:
