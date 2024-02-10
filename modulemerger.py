@@ -44,10 +44,13 @@ class ModuleMerger:
             ))
         if self.options.prelude != None:
             output.extend(ast.parse(self.options.prelude, mode="exec").body)
-        if self.options.exports_dictionary_mode == "munch":
+        if self.options.export_dictionary_mode == "munch":
             output.append(exporthelper.get_export_helper(True))
-        else:
+        elif self.options.export_dictionary_mode == "dict":
             output.append(exporthelper.get_export_helper(False))
+        else:
+            # export_dictionary_mode == "class", we don't need a helper
+            pass
         modules: list[ast.AST] = []
         for dependency in dependencies:
             module = dependency_tree_modules[dependency]

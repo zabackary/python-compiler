@@ -9,6 +9,9 @@ from .options import ModuleMergerOptions
 from .transformer import (Import, ImportVisitor, ModuleTransformer,
                           TransformError, purify_identifier)
 
+BUILTIN_EXPORT_INTERNAL_NAME = "exports_builtin"
+CLASS_EXPORT_CLASS_NAME = "exports"
+
 
 class ModuleUniqueIdentifierGenerator:
     unique_module_name: str
@@ -25,8 +28,11 @@ class ModuleUniqueIdentifierGenerator:
     def get_evaluated_factory(self):
         return f"__generated_module_{self.unique_module_name}__"
 
-    def get_internal_name(self):
-        return f"__generated_internal_{self.unique_module_name}__"
+    def get_internal_name(self, name: str):
+        return f"__generated_{name}_{self.unique_module_name}__"
+
+    def get_export_property_name(self, name: str):
+        return self.get_internal_name(f"export_{name}")
 
 
 class ProcessedModule:
@@ -56,11 +62,7 @@ class ProcessedModule:
                 if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
                     self.imports.append(item)
 
-    def _globals_dict(self, module: ast.Module) -> ast.Dict:
-        """
-        generates an ast.Dict mapping top-level module export name strings to
-        the Name of the export.
-        """
+    def _globals_names(self, module: ast.Module) -> list[str]:
         names: list[str] = []
         for top_level_stmt in module.body:
             if isinstance(top_level_stmt, ast.FunctionDef):
@@ -76,8 +78,14 @@ class ProcessedModule:
             elif isinstance(top_level_stmt, ast.AnnAssign):
                 if isinstance(top_level_stmt.target, ast.Name):
                     names.append(top_level_stmt.target.id)
+        return [name for name in names if not name.startswith("_")]
 
-        names = [a for a in names if not a.startswith("_")]
+    def _globals_dict(self, module: ast.Module) -> ast.Dict:
+        """
+        generates an ast.Dict mapping top-level module export name strings to
+        the Name of the export.
+        """
+        names = self._globals_names(module)
         return ast.Dict(
             keys=map(lambda a: ast.Constant(value=a), names),
             values=map(lambda a: ast.Name(id=a, ctx=ast.Load()), names)
@@ -99,13 +107,15 @@ class ProcessedModule:
                             ast.alias(
                                 name=self.name.removeprefix(
                                     "built-in:"),
-                                asname=self.name_generator.get_internal_name()
+                                asname=self.name_generator.get_internal_name(
+                                    BUILTIN_EXPORT_INTERNAL_NAME)
                             )
                         ]
                     ),
                     ast.Return(
                         value=ast.Name(
-                            id=self.name_generator.get_internal_name(),
+                            id=self.name_generator.get_internal_name(
+                                BUILTIN_EXPORT_INTERNAL_NAME),
                             ctx=ast.Load()
                         )
                     )
@@ -128,20 +138,53 @@ class ProcessedModule:
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)
-            body.append(ast.Return(
-                value=ast.Call(
-                    func=ast.Name(id=EXPORT_HELPER_NAME, ctx=ast.Load()),
-                    args=[
-                        ast.Call(
-                            func=ast.Name(id="locals", ctx=ast.Load()),
-                            args=[],
-                            keywords=[]
-                        ) if self.options.exports_names_mode == "locals"
-                        else self._globals_dict(transformed_module)
+            if self.options.export_dictionary_mode == "class":
+                globals_names = self._globals_names(transformed_module)
+                body.extend([
+                    ast.Assign(
+                            targets=[
+                                ast.Name(id=self.name_generator.get_export_property_name(
+                                    name), ctx=ast.Store())
+                            ],
+                            value=ast.Name(id=name, ctx=ast.Load())
+                            ) for name in globals_names
+                ])
+                body.append(ast.ClassDef(
+                    name=self.name_generator.get_internal_name(
+                        CLASS_EXPORT_CLASS_NAME),
+                    bases=[],
+                    keywords=[],
+                    body=[
+                        ast.Assign(
+                            targets=[
+                                ast.Name(id=name, ctx=ast.Store())
+                            ],
+                            value=ast.Name(id=self.name_generator.get_export_property_name(
+                                name), ctx=ast.Load())
+                        ) for name in globals_names
                     ],
-                    keywords=[]
-                )
-            ))
+                    decorator_list=[],
+                    type_params=[]
+                ))
+                body.append(ast.Return(
+                    value=ast.Name(
+                        id=self.name_generator.get_internal_name(CLASS_EXPORT_CLASS_NAME), ctx=ast.Load())
+                ))
+            else:
+                body.append(ast.Return(
+                    value=ast.Call(
+                        func=ast.Name(id=EXPORT_HELPER_NAME, ctx=ast.Load()),
+                        args=[
+                            ast.Call(
+                                func=ast.Name(id="locals", ctx=ast.Load()),
+                                args=[],
+                                keywords=[]
+                            ) if self.options.export_names_mode == "locals"
+                            else self._globals_dict(transformed_module)
+                        ],
+                        keywords=[]
+                    )
+                ))
 
             return ast.FunctionDef(
                 name=self.name_generator.get_factory(),
