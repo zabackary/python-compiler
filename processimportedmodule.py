@@ -153,7 +153,7 @@ class ProcessedModule:
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)
-            if self.options.export_dictionary_mode == "class":
+            if self.options.export_dictionary_mode == "class" or self.options.export_dictionary_mode == "class_instance":
                 globals_names = self._globals_names(transformed_module)
                 body.extend([
                     ast.Assign(
@@ -169,21 +169,56 @@ class ProcessedModule:
                         CLASS_EXPORT_CLASS_NAME),
                     bases=[],
                     keywords=[],
-                    body=[
-                        ast.Assign(
+                    body=(
+                        [ast.Assign(
                             targets=[
                                 ast.Name(id=name, ctx=ast.Store())
                             ],
                             value=ast.Name(id=self.name_generator.get_export_property_name(
                                 name), ctx=ast.Load())
-                        ) for name in globals_names
-                    ],
+                        ) for name in globals_names] if self.options.export_dictionary_mode == "class"
+                        else [
+                            ast.FunctionDef(
+                                name="__init__",
+                                args=ast.arguments(
+                                    posonlyargs=[],
+                                    args=[ast.arg(
+                                        arg="self"
+                                    )],
+                                    kwonlyargs=[],
+                                    kw_defaults=[],
+                                    defaults=[]
+                                ),
+                                body=[ast.Assign(
+                                    targets=[
+                                        ast.Attribute(
+                                            value=ast.Name(
+                                                id="self", ctx=ast.Store()),
+                                            attr=name,
+                                            ctx=ast.Store()
+                                        )
+                                    ],
+                                    value=ast.Name(id=self.name_generator.get_export_property_name(
+                                        name), ctx=ast.Load())
+                                ) for name in globals_names],
+                                decorator_list=[],
+                                type_params=[]
+                            )
+                        ]
+                    ),
                     decorator_list=[],
                     type_params=[]
                 ))
                 body.append(ast.Return(
-                    value=ast.Name(
-                        id=self.name_generator.get_internal_name(CLASS_EXPORT_CLASS_NAME), ctx=ast.Load())
+                    value=(ast.Name(
+                        id=self.name_generator.get_internal_name(CLASS_EXPORT_CLASS_NAME), ctx=ast.Load()))
+                    if self.options.export_dictionary_mode == "class"
+                    else ast.Call(
+                        func=ast.Name(id=self.name_generator.get_internal_name(
+                            CLASS_EXPORT_CLASS_NAME), ctx=ast.Load()),
+                        args=[],
+                        keywords=[]
+                    )
                 ))
             else:
                 body.append(ast.Return(

@@ -12,7 +12,8 @@ class ModuleMergerOptions:
         default_factory=lambda: {})
     export_dictionary_mode: (Literal["dict"]
                              | Literal["munch"]
-                             | Literal["class"]) = "dict"
+                             | Literal["class"]
+                             | Literal["class_instance"]) = "dict"
     export_names_mode: (Literal["locals"]
                         | Literal["static"]) = "locals"
     short_generated_names: bool = False

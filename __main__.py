@@ -76,12 +76,12 @@ def main(argv: list[str]):
                         help="the length of the hash used for making modules unique")
     parser.add_argument("--export-dictionary-mode",
                         default="dict",
-                        choices=["dict", "munch", "class"],
+                        choices=["dict", "munch", "class", "class_instance"],
                         help="the method that export dictionaries are converted to dot-accessible objects")
     parser.add_argument("--export-names-mode",
                         default="locals",
                         choices=["locals", "static"],
-                        help="how module exports are determined. use 'locals' for compatibility with existing code. forced to 'static' if --export-dictionary-mode is set to 'class'")
+                        help="how module exports are determined. use 'locals' for compatibility with existing code. forced to 'static' if --export-dictionary-mode is set to 'class' or 'class_instance'")
     args = parser.parse_args(argv)
     constants: dict[str, bool | str | int | float] = {
         "__COMPILED__": True

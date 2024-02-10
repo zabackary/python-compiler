@@ -10,7 +10,7 @@ how Python's module resolver works.
 ```
 usage: python-compiler [-h] -i INPUT [-o [OUTPUT]] [--ignore-imports IGNORE_IMPORTS [IGNORE_IMPORTS ...]] [--remove-imports REMOVE_IMPORTS [REMOVE_IMPORTS ...]] [-p PRELUDE]
                        [-c DEFINE_CONSTANT DEFINE_CONSTANT] [-d DEFINE] [-m | --minify | --no-minify] [-j | --json | --no-json] [-t | --time | --no-time]
-                       [--docstring | --no-docstring] [--module-hash-length MODULE_HASH_LENGTH] [--export-dictionary-mode {dict,munch,class}]
+                       [--docstring | --no-docstring] [--module-hash-length MODULE_HASH_LENGTH] [--export-dictionary-mode {dict,munch,class,class_instance}]
                        [--export-names-mode {locals,static}]
 
 Compiles/merges Python files.
@@ -41,10 +41,11 @@ options:
                         puts a generated docstring at the top of the module. added by default (default: True)
   --module-hash-length MODULE_HASH_LENGTH
                         the length of the hash used for making modules unique
-  --export-dictionary-mode {dict,munch,class}
+  --export-dictionary-mode {dict,munch,class,class_instance}
                         the method that export dictionaries are converted to dot-accessible objects
   --export-names-mode {locals,static}
-                        how module exports are determined. use 'locals' for compatibility with existing code. forced to 'static' if --export-dictionary-mode is set to 'class'
+                        how module exports are determined. use 'locals' for compatibility with existing code. forced to 'static' if --export-dictionary-mode is set to 'class' or
+                        'class_instance'
 ```
 
 To-do list:
