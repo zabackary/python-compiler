@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Literal
 
 
 @dataclass
@@ -9,3 +10,7 @@ class ModuleMergerOptions:
     prelude: str | None = None
     compile_time_constants: dict[str, str | bool | int | float] = field(
         default_factory=lambda: {})
+    exports_dictionary_mode: (Literal["dict"]
+                              | Literal["munch"]) = "dict"
+    exports_names_mode: (Literal["locals"]
+                         | Literal["static"]) = "locals"

@@ -11,15 +11,13 @@ from .transformer import (Import, ImportVisitor, ModuleTransformer,
 
 
 class ModuleUniqueIdentifierGenerator:
-    module_name: str
     unique_module_name: str
     id: str
 
     def __init__(self, module_name: str, module_path: str) -> None:
-        self.module_name = module_name
         self.id = hashlib.md5(module_path.encode(),
-                              usedforsecurity=False).hexdigest()
-        self.unique_module_name = f"{purify_identifier(self.module_name)}_{self.id}"
+                              usedforsecurity=False).hexdigest()[:8]
+        self.unique_module_name = f"{purify_identifier(module_name)}_{self.id}"
 
     def get_factory(self):
         return f"__generated_factory_{self.unique_module_name}__"
@@ -29,14 +27,6 @@ class ModuleUniqueIdentifierGenerator:
 
     def get_internal_name(self):
         return f"__generated_internal_{self.unique_module_name}__"
-
-
-class ImportData:
-    path: str
-    resolved_name: str
-
-    def __init__(self, path: str, resolved_name: str) -> None:
-        pass
 
 
 class ProcessedModule:
@@ -65,6 +55,33 @@ class ProcessedModule:
             for item in ImportVisitor.find_imports(self.module, self.path):
                 if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
                     self.imports.append(item)
+
+    def _globals_dict(self, module: ast.Module) -> ast.Dict:
+        """
+        generates an ast.Dict mapping top-level module export name strings to
+        the Name of the export.
+        """
+        names: list[str] = []
+        for top_level_stmt in module.body:
+            if isinstance(top_level_stmt, ast.FunctionDef):
+                names.append(top_level_stmt.name)
+            elif isinstance(top_level_stmt, ast.AsyncFunctionDef):
+                names.append(top_level_stmt.name)
+            elif isinstance(top_level_stmt, ast.ClassDef):
+                names.append(top_level_stmt.name)
+            elif isinstance(top_level_stmt, ast.Assign):
+                for target in top_level_stmt.targets:
+                    if isinstance(target, ast.Name):
+                        names.append(target.id)
+            elif isinstance(top_level_stmt, ast.AnnAssign):
+                if isinstance(top_level_stmt.target, ast.Name):
+                    names.append(top_level_stmt.target.id)
+
+        names = [a for a in names if not a.startswith("_")]
+        return ast.Dict(
+            keys=map(lambda a: ast.Constant(value=a), names),
+            values=map(lambda a: ast.Name(id=a, ctx=ast.Load()), names)
+        )
 
     def generate_factory_ast(self) -> ast.FunctionDef | ast.Import:
         if self.module is None:
@@ -101,7 +118,7 @@ class ProcessedModule:
                 argument_import_names.append(item.generate_unique_identifier())
 
             try:
-                transformed_module = ModuleTransformer(
+                transformed_module: ast.Module = ModuleTransformer(
                     self.imports,
                     argument_import_names,
                     self.name, self.options).visit(self.module)
@@ -119,7 +136,8 @@ class ProcessedModule:
                             func=ast.Name(id="locals", ctx=ast.Load()),
                             args=[],
                             keywords=[]
-                        )
+                        ) if self.options.exports_names_mode == "locals"
+                        else self._globals_dict(transformed_module)
                     ],
                     keywords=[]
                 )

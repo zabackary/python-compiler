@@ -1,9 +1,13 @@
 import ast
 
 EXPORT_HELPER_NAME = "__generated_helper_export__"
+EXPORT_HELPER_CONTENTS_SELF_DICT = f"""
+class {EXPORT_HELPER_NAME}:
+	def __init__(A,B):A.__dict__.update(B)
+"""
 # derived from https://github.com/Infinidat/munch
 # Used to make the locals() dictionary into a attribute-accessible module
-EXPORT_HELPER_CONTENTS = f"""
+EXPORT_HELPER_CONTENTS_MUNCH = f"""
 class {EXPORT_HELPER_NAME}(dict):
 	C=KeyError
 	A=AttributeError
@@ -28,5 +32,7 @@ class {EXPORT_HELPER_NAME}(dict):
 """
 
 
-def get_export_helper():
-    return ast.parse(EXPORT_HELPER_CONTENTS, mode="exec").body[0]
+def get_export_helper(use_munch: bool = False):
+    return ast.parse(
+        EXPORT_HELPER_CONTENTS_MUNCH if use_munch else EXPORT_HELPER_CONTENTS_SELF_DICT,
+        mode="exec").body[0]

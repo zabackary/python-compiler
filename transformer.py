@@ -196,6 +196,20 @@ class ModuleTransformer(ast.NodeTransformer):
             return None
         return node
 
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
+        top_level = node in self.top_level_statements
+        # raises errors if a constant is assigned to outside of the top-level
+        # if it's top-level, silently deletes it
+        if (isinstance(node.target, ast.Name)
+            and isinstance(node.target.ctx, ast.Store)
+                and node.target.id in self.options.compile_time_constants):
+            if top_level:
+                return None
+            else:
+                raise AssignmentToConstantError(
+                    f"assignment to compile-time constant '{node.target.id}' on line {node.target.lineno} col {node.target.col_offset}")
+        return node
+
     def visit_Global(self, node: Global) -> Any:
         raise GlobalError(
             f"global statements aren't supported on line {node.lineno} col {node.col_offset}")
