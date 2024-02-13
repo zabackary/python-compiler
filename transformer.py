@@ -14,6 +14,9 @@ def purify_identifier(name: str):
     return python_invalid_character_re.sub("", name)
 
 
+_ident_index = -1
+
+
 @dataclass
 class Import:
     module: str
@@ -24,11 +27,15 @@ class Import:
     is_module_import: bool
 
     def generate_unique_identifier(self, minified: bool, hash_length: int):
-        id = hashlib.md5(f"{self.module}{self.module_alias}{self.context_path}".encode(
-        ), usedforsecurity=False).hexdigest()[:hash_length]
         if minified:
-            return f"i{id}"
+            # we use global state here because local parameters don't get
+            # optimized by python-minifier, so we have to "minify" it ourselves
+            global _ident_index
+            _ident_index += 1
+            return f"__{_ident_index}"
         else:
+            id = hashlib.md5(f"{self.module}{self.module_alias}{self.context_path}".encode(
+            ), usedforsecurity=False).hexdigest()[:hash_length]
             return f"__generated_import_{purify_identifier(self.module)}_{id}__"
 
 
