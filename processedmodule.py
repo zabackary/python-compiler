@@ -6,8 +6,8 @@ from importlib import util as import_utils
 
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import ModuleMergerOptions
-from .transformer import (FoundImport, ImportVisitor, ModuleTransformer,
-                          TransformError, purify_identifier)
+from .transformers import (FoundImport, ImportVisitor, ModuleTransformer,
+                           TransformError, purify_identifier)
 
 BUILTIN_EXPORT_INTERNAL_NAME = "exports_builtin"
 CLASS_EXPORT_CLASS_NAME = "exports"

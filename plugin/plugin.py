@@ -1,7 +1,7 @@
 import ast
 
 from processedmodule import ModuleUniqueIdentifierGenerator
-from transformer import FoundImport
+from transformers import FoundImport
 
 
 class Plugin:
