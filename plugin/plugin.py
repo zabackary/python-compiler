@@ -1,7 +1,9 @@
 import ast
+from typing import TYPE_CHECKING
 
-from processedmodule import ModuleUniqueIdentifierGenerator
-from transformers import FoundImport
+if TYPE_CHECKING:
+    from ..processedmodule import ModuleUniqueIdentifierGenerator
+    from ..transformers import FoundImport
 
 
 class Plugin:
@@ -16,7 +18,7 @@ class Plugin:
         """
         return module
 
-    def hook_module_post_transform(self, path: str, module: list[ast.AST], name_generator: ModuleUniqueIdentifierGenerator) -> list[ast.AST]:
+    def hook_module_post_transform(self, path: str, module: list[ast.AST], name_generator: "ModuleUniqueIdentifierGenerator") -> list[ast.AST]:
         """ A hook run after name translation is performed but before modules are bundled
 
         Generally you should not be using this, but it might be useful to perform 
@@ -25,7 +27,7 @@ class Plugin:
         """
         return module
 
-    def hook_import(self, imp: FoundImport) -> FoundImport:
+    def hook_import(self, imp: "FoundImport") -> "FoundImport":
         """ A hook run on all imports a module imports.
 
         This can be used to e.g. modify an import path.

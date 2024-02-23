@@ -5,9 +5,9 @@ import os
 import sys
 import time
 
+from . import plugin
 from .compiler import Compiler
 from .graph import TopologicalSortError
-from .minify import minify
 from .options import ModuleMergerOptions
 from .transformers import AsteriskImportError, TransformError
 
@@ -17,7 +17,8 @@ ERRORS = {
     "circular-deps": "failed to compile due to circular dependencies",
     "recursion": "failed to compile due to excessive amount of nested modules",
     "asterisk-import": "failed to compile because of asterisk import in %s",
-    "transform": "%s"
+    "transform": "%s",
+    "assignment-to-constant": "failed to compile due to assignment to constant: %s"
 }
 
 
@@ -94,6 +95,12 @@ def main(argv: list[str]):
         "%a, %d %b %Y %H:%M:%S", time.localtime())) if args.time else ""
     with args.input as input:
         try:
+            plugins: list[plugin.Plugin] = []
+            plugins.append(plugin.ConstantsPlugin(constants=constants))
+            if args.prelude is not None:
+                plugins.append(plugin.PreludePlugin(prelude=args.prelude))
+            if args.minify:
+                plugins.append(plugin.MinifyPlugin())
             merged = Compiler(
                 source=input.read(),
                 path=os.path.join(os.getcwd(),
@@ -105,10 +112,9 @@ def main(argv: list[str]):
                     export_dictionary_mode=args.export_dictionary_mode,
                     export_names_mode=args.export_names_mode,
                     short_generated_names=args.minify,
-                    hash_length=args.module_hash_length
+                    hash_length=args.module_hash_length,
+                    plugins=plugins
                 ))()
-            if args.minify:
-                merged = minify(merged)
             if args.json:
                 args.output.write(json.dumps({
                     "output": merged
@@ -133,6 +139,11 @@ def main(argv: list[str]):
         except TransformError as e:
             print(
                 format_error("transform", args.json, e.args),
+                file=sys.stderr)
+            sys.exit(1)
+        except plugin.constants.AssignmentToConstantError as e:
+            print(
+                format_error("assignment-to-constant", args.json, e.args),
                 file=sys.stderr)
             sys.exit(1)
 

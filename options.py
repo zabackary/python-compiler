@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
-from plugin.plugin import Plugin
+from .plugin import Plugin
 
 
 @dataclass

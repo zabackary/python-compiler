@@ -15,6 +15,7 @@ class ConstantsTransformer(ast.NodeTransformer):
 
     def __init__(self, constants: dict[str, str | bool | int | float]) -> None:
         self.constants = constants
+        self.top_level_statements = []
         super().__init__()
 
     def visit_Name(self, node: ast.Name) -> Any:
