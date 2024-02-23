@@ -1,6 +1,6 @@
 import ast
 
-from processimportedmodule import ModuleUniqueIdentifierGenerator
+from processedmodule import ModuleUniqueIdentifierGenerator
 from transformer import Import
 
 

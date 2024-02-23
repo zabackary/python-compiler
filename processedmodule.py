@@ -76,6 +76,32 @@ class ProcessedModule:
                 if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
                     self.imports.append(item)
 
+    @classmethod
+    def resolve(cls, module: str, context_path: str, options: ModuleMergerOptions):
+        old_path = sys.path.copy()
+        # this assumes that the directory of this current file is always the first
+        # search path
+        sys.path[0] = os.path.dirname(context_path)
+        spec = import_utils.find_spec(module)
+        sys.path = old_path
+
+        # resolve stdlib modules and add a stub for ignored modules
+        if (spec is not None and (spec.origin == "built-in"
+                                  or module in options.ignore_imports
+                                  or module in options.remove_imports
+                                  or module in sys.stdlib_module_names)):
+            return cls(None, "built-in", module, options)
+
+        if spec is None or spec.origin is None:
+            raise ImportError(f"failed to resolve import {module}")
+        else:
+            try:
+                with open(spec.origin, "r") as file:
+                    return cls(file.read(), spec.origin, module, options)
+            except OSError as err:
+                raise ImportError(
+                    f"failed to import module {module} from path {spec.origin}: {str(err)}")
+
     def _globals_names(self, module: ast.Module) -> list[str]:
         names: list[str] = []
         for top_level_stmt in module.body:
@@ -298,26 +324,3 @@ class ProcessedModule:
                     keywords=[]
                 )
             )
-
-
-def process_imported_module(module: str, context_path: str, options: ModuleMergerOptions):
-    old_path = sys.path.copy()
-    # this assumes that the directory of this current file is always the first
-    # search path
-    sys.path[0] = os.path.dirname(context_path)
-    spec = import_utils.find_spec(module)
-    sys.path = old_path
-    if spec is None or spec.origin is None:
-        raise ImportError(f"failed to resolve import {module}")
-    elif (spec.origin == "built-in"
-          or module in options.ignore_imports
-          or module in options.remove_imports
-          or module in sys.stdlib_module_names):
-        return ProcessedModule(None, "built-in", module, options)
-    else:
-        try:
-            with open(spec.origin, "r") as file:
-                return ProcessedModule(file.read(), spec.origin, module, options)
-        except OSError as err:
-            raise ImportError(
-                f"failed to import module {module} from path {spec.origin}: {str(err)}")

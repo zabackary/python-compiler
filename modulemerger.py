@@ -2,7 +2,7 @@ import ast
 
 from . import exporthelper, graph
 from .options import ModuleMergerOptions
-from .processimportedmodule import ProcessedModule, process_imported_module
+from .processedmodule import ProcessedModule
 
 
 class ModuleMerger:
@@ -28,7 +28,7 @@ class ModuleMerger:
                 dependency_tree_modules[module.path] = module
                 dependency_tree_edges[module.path] = []
                 for item in module.imports:
-                    processed_module = process_imported_module(
+                    processed_module = ProcessedModule.resolve(
                         item.module, module.path, self.options)
                     dependency_tree_edges[module.path].append(
                         processed_module.path)
