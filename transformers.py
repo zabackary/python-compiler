@@ -47,10 +47,6 @@ class TransformError(Exception):
     pass
 
 
-class AssignmentToConstantError(Exception):
-    pass
-
-
 class GlobalError(Exception):
     pass
 
@@ -179,45 +175,11 @@ class ModuleTransformer(ast.NodeTransformer):
         if isinstance(node.ctx, ast.Load):
             if node.id == "__name__":
                 return ast.Constant(value=self.name)
-            elif node.id in self.options.compile_time_constants:
-                return ast.Constant(value=self.options.compile_time_constants[node.id])
         return node
 
     def visit_Module(self, node: Module) -> Any:
         self.top_level_statements = node.body
         self.generic_visit(node)
-        return node
-
-    def visit_Assign(self, node: ast.Assign) -> Any:
-        top_level = node in self.top_level_statements
-        # raises errors if a constant is assigned to outside of the top-level
-        # if it's top-level, silently deletes it
-        for target in node.targets.copy():
-            if (isinstance(target, ast.Name)
-                and isinstance(target.ctx, ast.Store)
-                    and target.id in self.options.compile_time_constants):
-                if top_level:
-                    node.targets.remove(target)
-                else:
-                    raise AssignmentToConstantError(
-                        f"assignment to compile-time constant '{target.id}' on line {target.lineno} col {target.col_offset}")
-        # delete the assignment if there's nothing it's assigning to
-        if len(node.targets) == 0:
-            return None
-        return node
-
-    def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
-        top_level = node in self.top_level_statements
-        # raises errors if a constant is assigned to outside of the top-level
-        # if it's top-level, silently deletes it
-        if (isinstance(node.target, ast.Name)
-            and isinstance(node.target.ctx, ast.Store)
-                and node.target.id in self.options.compile_time_constants):
-            if top_level:
-                return None
-            else:
-                raise AssignmentToConstantError(
-                    f"assignment to compile-time constant '{node.target.id}' on line {node.target.lineno} col {node.target.col_offset}")
         return node
 
     def visit_Global(self, node: Global) -> Any:

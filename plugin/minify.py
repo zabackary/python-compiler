@@ -1,9 +1,8 @@
 from ast import Module, fix_missing_locations, parse, unparse
 from typing import Any
 
-from plugin.plugin import Plugin
-
 from ..python_minifier import minify  # type:ignore
+from .plugin import Plugin
 
 
 class MinifyPlugin(Plugin):
