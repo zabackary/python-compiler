@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
+from plugin.plugin import Plugin
+
 
 @dataclass
 class ModuleMergerOptions:
@@ -18,3 +20,4 @@ class ModuleMergerOptions:
                         | Literal["static"]) = "locals"
     short_generated_names: bool = False
     hash_length: int = 8
+    plugins: list[Plugin] = field(default_factory=lambda: [])

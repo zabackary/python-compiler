@@ -74,6 +74,9 @@ class ProcessedModule:
         if self.module is not None:
             for item in ImportVisitor.find_imports(self.module, self.path):
                 if item.module not in self.options.ignore_imports and item.module not in self.options.remove_imports:
+                    # ask plugins for their take on this import
+                    for plugin in self.options.plugins:
+                        item = plugin.hook_import(item)
                     self.imports.append(item)
 
     @classmethod
@@ -92,6 +95,21 @@ class ProcessedModule:
                                   or module in sys.stdlib_module_names)):
             return cls(None, "built-in", module, options)
 
+        # ask plugins for a resolution
+        for plugin in options.plugins:
+            maybe_resolved = plugin.hook_import_resolution(
+                context_path, module)
+            # if the plugin didn't delegate resolution to us, then use it
+            # maybe_resolved[0] is source, maybe_resolved[1] is path
+            if maybe_resolved is not None:
+                return cls(
+                    maybe_resolved[0],
+                    maybe_resolved[1],
+                    module,
+                    options
+                )
+
+        # use find_spec's resolution or error if not found
         if spec is None or spec.origin is None:
             raise ImportError(f"failed to resolve import {module}")
         else:
@@ -133,6 +151,7 @@ class ProcessedModule:
 
     def generate_factory_ast(self) -> ast.FunctionDef | ast.Import:
         if self.module is None:
+            # we don't have the code for the module, so it must be built-in
             return ast.FunctionDef(
                 name=self.name_generator.get_factory(),
                 args=ast.arguments(
@@ -163,7 +182,14 @@ class ProcessedModule:
                 decorator_list=[]
             )
         else:
+            # we have the code, so let's transform it
             argument_import_names: list[str] = []
+
+            # let plugins do their thing
+            for plugin in self.options.plugins:
+                self.module = plugin.hook_module(self.path, self.module)
+
+            # get the argument names of the imports
             for item in self.imports:
                 argument_import_names.append(item.generate_unique_identifier(
                     self.options.short_generated_names, self.options.hash_length))
@@ -273,6 +299,11 @@ class ProcessedModule:
                             keywords=[]
                         )
                     ))
+
+            # let plugins do their thing with the processed body
+            for plugin in self.options.plugins:
+                body = plugin.hook_module_post_transform(
+                    self.path, body, self.name_generator)
 
             return ast.FunctionDef(
                 name=self.name_generator.get_factory(),
