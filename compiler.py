@@ -5,7 +5,7 @@ from .options import ModuleMergerOptions
 from .processedmodule import ProcessedModule
 
 
-class ModuleMerger:
+class Compiler:
     source: str
     path: str
     options: ModuleMergerOptions
@@ -15,7 +15,7 @@ class ModuleMerger:
         self.path = path
         self.options = options
 
-    def merge(self) -> str:
+    def __call__(self) -> str:
         main_processed_module = ProcessedModule(
             self.source, self.path, "__main__", self.options)
         dependency_tree_edges: dict[str, list[str]] = {}

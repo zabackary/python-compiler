@@ -5,9 +5,9 @@ import os
 import sys
 import time
 
+from .compiler import Compiler
 from .graph import TopologicalSortError
 from .minify import minify
-from .modulemerger import ModuleMerger
 from .options import ModuleMergerOptions
 from .transformers import AsteriskImportError, TransformError
 
@@ -94,7 +94,7 @@ def main(argv: list[str]):
         "%a, %d %b %Y %H:%M:%S", time.localtime())) if args.time else ""
     with args.input as input:
         try:
-            mm = ModuleMerger(
+            merged = Compiler(
                 source=input.read(),
                 path=os.path.join(os.getcwd(),
                                   input.name if input.name != "<stdin>" else DEFAULT_FILE_NAME),
@@ -108,8 +108,7 @@ def main(argv: list[str]):
                     export_names_mode=args.export_names_mode,
                     short_generated_names=args.minify,
                     hash_length=args.module_hash_length
-                ))
-            merged = mm.merge()
+                ))()
             if args.minify:
                 merged = minify(merged)
             if args.json:
