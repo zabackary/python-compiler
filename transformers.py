@@ -96,14 +96,11 @@ class ModuleTransformer(ast.NodeTransformer):
     name: str
     options: ModuleMergerOptions
 
-    top_level_statements: list[ast.stmt]
-
     def __init__(self, imports: list[FoundImport], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name
         self.options = options
-        self.top_level_statements = []
         super().__init__()
 
     def _resolve_module_argument_identifier(self, module_name: str) -> str:
@@ -175,11 +172,6 @@ class ModuleTransformer(ast.NodeTransformer):
         if isinstance(node.ctx, ast.Load):
             if node.id == "__name__":
                 return ast.Constant(value=self.name)
-        return node
-
-    def visit_Module(self, node: Module) -> Any:
-        self.top_level_statements = node.body
-        self.generic_visit(node)
         return node
 
     def visit_Global(self, node: Global) -> Any:

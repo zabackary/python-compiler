@@ -18,6 +18,11 @@ class ConstantsTransformer(ast.NodeTransformer):
         self.top_level_statements = []
         super().__init__()
 
+    def visit_Module(self, node: Module) -> Any:
+        self.top_level_statements = node.body
+        self.generic_visit(node)
+        return node
+
     def visit_Name(self, node: ast.Name) -> Any:
         if isinstance(node.ctx, ast.Load):
             if node.id in self.constants:
