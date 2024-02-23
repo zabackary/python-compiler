@@ -315,5 +315,9 @@ def process_imported_module(module: str, context_path: str, options: ModuleMerge
           or module in sys.stdlib_module_names):
         return ProcessedModule(None, "built-in", module, options)
     else:
-        with open(spec.origin, "r") as file:
-            return ProcessedModule(file.read(), spec.origin, module, options)
+        try:
+            with open(spec.origin, "r") as file:
+                return ProcessedModule(file.read(), spec.origin, module, options)
+        except OSError as err:
+            raise ImportError(
+                f"failed to import module {module} from path {spec.origin}: {str(err)}")
