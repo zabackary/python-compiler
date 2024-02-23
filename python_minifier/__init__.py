@@ -153,10 +153,10 @@ def minify(
     bind_names(module)
     resolve_names(module)
 
-    if remove_builtin_exception_brackets and not module.tainted:
+    if remove_builtin_exception_brackets and not module.tainted:  # type:ignore
         remove_no_arg_exception_call(module)
 
-    if module.tainted:
+    if module.tainted:  # type:ignore
         rename_globals = False
         rename_locals = False
 
