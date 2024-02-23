@@ -1,7 +1,7 @@
 import ast
 import hashlib
 import re
-from _ast import Assign, Global, Module, Set
+from _ast import Global, Module
 from dataclasses import dataclass
 from typing import Any
 
