@@ -18,7 +18,7 @@ _ident_index = -1
 
 
 @dataclass
-class Import:
+class FoundImport:
     module: str
     module_alias: str | None
     context_path: str
@@ -56,7 +56,7 @@ class GlobalError(Exception):
 
 
 class ImportVisitor(ast.NodeVisitor):
-    imports: list[Import]
+    imports: list[FoundImport]
     context_path: str
 
     def __init__(self, context_path: str) -> None:
@@ -67,7 +67,7 @@ class ImportVisitor(ast.NodeVisitor):
     def visit_Import(self, node: ast.Import) -> Any:
         for alias in node.names:
             self.imports.append(
-                Import(
+                FoundImport(
                     module=alias.name,
                     module_alias=alias.asname,
                     is_module_import=True,
@@ -79,7 +79,7 @@ class ImportVisitor(ast.NodeVisitor):
         if node.module is None:
             raise TypeError("ImportFrom module is None")
         self.imports.append(
-            Import(
+            FoundImport(
                 module=node.module,
                 module_alias=None,
                 imports=node.names,
@@ -95,14 +95,14 @@ class ImportVisitor(ast.NodeVisitor):
 
 
 class ModuleTransformer(ast.NodeTransformer):
-    imports: list[Import]
+    imports: list[FoundImport]
     argument_import_names: list[str]
     name: str
     options: ModuleMergerOptions
 
     top_level_statements: list[ast.stmt]
 
-    def __init__(self, imports: list[Import], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
+    def __init__(self, imports: list[FoundImport], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name

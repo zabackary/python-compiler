@@ -6,7 +6,7 @@ from importlib import util as import_utils
 
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import ModuleMergerOptions
-from .transformer import (Import, ImportVisitor, ModuleTransformer,
+from .transformer import (FoundImport, ImportVisitor, ModuleTransformer,
                           TransformError, purify_identifier)
 
 BUILTIN_EXPORT_INTERNAL_NAME = "exports_builtin"
@@ -52,7 +52,7 @@ class ModuleUniqueIdentifierGenerator:
 class ProcessedModule:
     name: str
     module: ast.Module | None
-    imports: list[Import]
+    imports: list[FoundImport]
     path: str
     name_generator: ModuleUniqueIdentifierGenerator
     options: ModuleMergerOptions

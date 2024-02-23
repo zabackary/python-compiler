@@ -1,7 +1,7 @@
 import ast
 
 from processedmodule import ModuleUniqueIdentifierGenerator
-from transformer import Import
+from transformer import FoundImport
 
 
 class Plugin:
@@ -25,7 +25,7 @@ class Plugin:
         """
         return module
 
-    def hook_import(self, imp: Import) -> Import:
+    def hook_import(self, imp: FoundImport) -> FoundImport:
         """ A hook run on all imports a module imports.
 
         This can be used to e.g. modify an import path.
