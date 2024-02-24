@@ -5,8 +5,7 @@ import sys
 import time
 
 from .src import plugin
-from .src.compiler import Compiler
-from .src.graph import TopologicalSortError
+from .src.compiler import CircularDependencyError, Compiler
 from .src.options import CompilerOptions
 from .src.transformers import AsteriskImportError, TransformError
 
@@ -120,7 +119,7 @@ def main(argv: list[str]):
                 }))
             else:
                 args.output.write(merged)
-        except TopologicalSortError:
+        except CircularDependencyError:
             print(
                 format_error("circular-deps", args.json),
                 file=sys.stderr)

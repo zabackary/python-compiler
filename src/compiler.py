@@ -5,6 +5,10 @@ from .options import CompilerOptions
 from .processedmodule import ProcessedModule
 
 
+class CircularDependencyError(Exception):
+    pass
+
+
 class Compiler:
     source: str
     path: str
@@ -37,8 +41,11 @@ class Compiler:
                     dependency_tree_edges[module.path].append(
                         processed_module.path)
                     dependency_queue.append(processed_module)
-        dependencies = list(reversed(graph.Graph(
-            dependency_tree_edges).topological_sort()))
+        try:
+            dependencies = list(reversed(graph.Graph(
+                dependency_tree_edges).topological_sort()))
+        except graph.TopologicalSortError:
+            raise CircularDependencyError()
 
         output: list[ast.AST] = []
 
