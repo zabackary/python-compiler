@@ -1,12 +1,9 @@
 import ast
 
 from . import exporthelper, graph
+from .errors import CircularDependencyError
 from .options import CompilerOptions
 from .processedmodule import ProcessedModule
-
-
-class CircularDependencyError(Exception):
-    pass
 
 
 class Compiler:

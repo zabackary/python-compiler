@@ -135,6 +135,8 @@ def main(argv: list[str]):
                 file=sys.stderr)
             sys.exit(1)
         except TransformError as e:
+            # Lots of the above errors are subclasses of a generic
+            # TransformError, so this should be last.
             print(
                 format_error("transform", args.json, e.args),
                 file=sys.stderr)

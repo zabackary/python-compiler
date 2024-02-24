@@ -4,10 +4,11 @@ import os
 import sys
 from importlib import util as import_utils
 
+from .errors import TransformError
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import CompilerOptions
 from .transformers import (FoundImport, ImportVisitor, ModuleTransformer,
-                           TransformError, purify_identifier)
+                           purify_identifier)
 
 BUILTIN_EXPORT_INTERNAL_NAME = "exports_builtin"
 CLASS_EXPORT_CLASS_NAME = "exports"
@@ -194,14 +195,10 @@ class ProcessedModule:
                 argument_import_names.append(item.generate_unique_identifier(
                     self.options.short_generated_names, self.options.hash_length))
 
-            try:
-                transformed_module: ast.Module = ModuleTransformer(
-                    self.imports,
-                    argument_import_names,
-                    self.name, self.options).visit(self.module)
-            except Exception as err:
-                raise TransformError(
-                    f"failed to transform module at {self.path}: {str(err)}")
+            transformed_module: ast.Module = ModuleTransformer(
+                self.imports,
+                argument_import_names,
+                self.name, self.options).visit(self.module)
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)

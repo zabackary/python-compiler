@@ -1,10 +1,12 @@
 import ast
 import hashlib
 import re
-from _ast import Global, Module
+from _ast import Global
 from dataclasses import dataclass
 from typing import Any
 
+from .errors import (AsteriskImportError, GlobalError, InternalCompilerError,
+                     TransformError)
 from .options import CompilerOptions
 
 python_invalid_character_re = re.compile(r"[^A-Za-z0-9_]")
@@ -37,18 +39,6 @@ class FoundImport:
             id = hashlib.md5(f"{self.module}{self.module_alias}{self.context_path}".encode(
             ), usedforsecurity=False).hexdigest()[:hash_length]
             return f"__generated_import_{purify_identifier(self.module)}_{id}__"
-
-
-class AsteriskImportError(Exception):
-    pass
-
-
-class TransformError(Exception):
-    pass
-
-
-class GlobalError(Exception):
-    pass
 
 
 class ImportVisitor(ast.NodeVisitor):
@@ -107,7 +97,7 @@ class ModuleTransformer(ast.NodeTransformer):
         for i, item in enumerate(self.imports):
             if item.module == module_name:
                 return self.argument_import_names[i]
-        raise TransformError(
+        raise InternalCompilerError(
             f"can't find '{module_name}' import in mapping")
 
     def visit_Import(self, node: ast.Import) -> Any:
@@ -142,7 +132,7 @@ class ModuleTransformer(ast.NodeTransformer):
             # don't emit anything
             return None
         if module is None:
-            raise TransformError(
+            raise InternalCompilerError(
                 f"ImportFrom module is None on line {node.lineno}")
         resolved_argument = self._resolve_module_argument_identifier(
             module)
