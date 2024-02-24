@@ -4,10 +4,7 @@ import os
 import sys
 import time
 
-from .src import plugin
-from .src.compiler import CircularDependencyError, Compiler
-from .src.options import CompilerOptions
-from .src.transformers import AsteriskImportError, TransformError
+from .src import Compiler, CompilerOptions, errors, plugin
 
 DEFAULT_FILE_NAME = "__stdin__.py"
 PROG_NAME = "python-compiler"
@@ -16,7 +13,8 @@ ERRORS = {
     "recursion": "failed to compile due to excessive amount of nested modules",
     "asterisk-import": "failed to compile because of asterisk import in %s",
     "transform": "%s",
-    "assignment-to-constant": "failed to compile due to assignment to constant: %s"
+    "assignment-to-constant": "failed to compile due to assignment to constant: %s",
+    "internal": "internal compiler error: %s\nThis is a bug. If you wouldn't mind, please report it at https://github.com/zabackary/python-compiler/issues/"
 }
 
 
@@ -119,26 +117,31 @@ def main(argv: list[str]):
                 }))
             else:
                 args.output.write(merged)
-        except CircularDependencyError:
+        except errors.CircularDependencyError:
             print(
                 format_error("circular-deps", args.json),
                 file=sys.stderr)
             sys.exit(1)
-        except RecursionError:
-            print(
-                format_error("recursion", args.json),
-                file=sys.stderr)
-            sys.exit(1)
-        except AsteriskImportError as e:
+        except errors.AsteriskImportError as e:
             print(
                 format_error("asterisk-import", args.json, e.args),
                 file=sys.stderr)
             sys.exit(1)
-        except TransformError as e:
+        except errors.TransformError as e:
             # Lots of the above errors are subclasses of a generic
             # TransformError, so this should be last.
             print(
                 format_error("transform", args.json, e.args),
+                file=sys.stderr)
+            sys.exit(1)
+        except errors.NestedModuleRecursionError:
+            print(
+                format_error("recursion", args.json),
+                file=sys.stderr)
+            sys.exit(1)
+        except errors.InternalCompilerError as e:
+            print(
+                format_error("internal", args.json, e.args),
                 file=sys.stderr)
             sys.exit(1)
         except plugin.constants.AssignmentToConstantError as e:

@@ -20,3 +20,7 @@ class CircularDependencyError(CompilerError):
 
 class InternalCompilerError(CompilerError):
     pass
+
+
+class NestedModuleRecursionError(CompilerError):
+    pass
