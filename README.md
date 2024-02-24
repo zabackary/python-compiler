@@ -1,13 +1,14 @@
 # `python-compiler`
 
-A command-line tool to compile Python files into one ginormous one.
+> A command-line tool to compile Python files into one ginormous one, with
+> plugin support and more.
 
 ## Command-line usage
 
 Must be invoked via `python -m python-compiler` from the parent directory due to
-how Python's module resolver works.
+how Python's module resolver works. If you know a better way, please tell me!
 
-```
+```text
 usage: python-compiler [-h] -i INPUT [-o [OUTPUT]] [--ignore-imports IGNORE_IMPORTS [IGNORE_IMPORTS ...]] [--remove-imports REMOVE_IMPORTS [REMOVE_IMPORTS ...]] [-p PRELUDE]
                        [-c DEFINE_CONSTANT DEFINE_CONSTANT] [-d DEFINE] [-m | --minify | --no-minify] [-j | --json | --no-json] [-t | --time | --no-time]
                        [--docstring | --no-docstring] [--module-hash-length MODULE_HASH_LENGTH] [--export-dictionary-mode {dict,munch,class,class_instance}]
@@ -28,7 +29,7 @@ options:
   -p PRELUDE, --prelude PRELUDE
                         some Python code to insert at the top of the file. must be well-formed parsable Python code
   -c DEFINE_CONSTANT DEFINE_CONSTANT, --define-constant DEFINE_CONSTANT DEFINE_CONSTANT
-                        defines one compile-time constant. use some name that you're sure won't collide with any in your code, i.e. __MY_CONSTANT__
+                        defines one compile-time constant as a string. use some name that you're sure won't collide with any in your code, i.e. __MY_CONSTANT__
   -d DEFINE, --define DEFINE
                         equivalent to defining a constant to be 1 using --define-constant.
   -m, --minify, --no-minify
@@ -48,6 +49,52 @@ options:
                         'class_instance'
 ```
 
-To-do list:
+## Library usage
 
-- [ ] Add compile-time constants
+I'm not sure how pip packages are supposed to be structured, so I'm probably not
+going to publish this library. If you find it useful, I may look into it.
+
+```python
+import python_compiler
+
+python_compiler.Compiler(
+    source=input(),
+    path="/path/to/source/file",
+    options=python_compiler.CompilerOptions(
+        # ...
+        plugins=[
+            # Plugins
+            python_compiler.MinifyPlugin()
+        ]
+    )
+)
+```
+
+For more examples, see the [CLI source code](./__main__.py). Note that `path`
+does not need to be a real path, but it's used for import resolution.
+
+## Plugins
+
+Plugins must inherit from [the base `Plugin` class](./src/plugin/plugin.py). An
+example plugin might go something like this:
+
+```python
+class MyPlugin(python_compiler.plugin.Plugin):
+    def hook_module(self, path, module):
+        module = my_transformation(module)
+        return module
+```
+
+There are a couple available hooks as of this writing:
+
+- `hook_module`  
+  A hook run before name translation is performed and modules are bundled
+- `hook_module_post_transform`  
+  A hook run after name translation is performed but before modules are bundled
+- `hook_import`  
+  A hook run on all imports a module imports
+- `hook_import_resolution`  
+  A hook run during the module resolution step. It can be used to define
+  "virtual modules".
+- `hook_output`  
+  A hook called just prior to the end of code generation.

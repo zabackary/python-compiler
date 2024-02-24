@@ -52,7 +52,7 @@ def main(argv: list[str]):
     parser.add_argument("-c", "--define-constant", nargs=2,
                         default=[],
                         action="append",
-                        help="defines one compile-time constant. use some name that you're sure won't collide with any in your code, i.e. __MY_CONSTANT__")
+                        help="defines one compile-time constant as a string. use some name that you're sure won't collide with any in your code, i.e. __MY_CONSTANT__")
     parser.add_argument("-d", "--define", nargs=1,
                         default=[],
                         action="append",
