@@ -1,15 +1,14 @@
 import argparse
-import ast
 import json
 import os
 import sys
 import time
 
-from . import plugin
-from .compiler import Compiler
-from .graph import TopologicalSortError
-from .options import ModuleMergerOptions
-from .transformers import AsteriskImportError, TransformError
+from .src import plugin
+from .src.compiler import Compiler
+from .src.graph import TopologicalSortError
+from .src.options import ModuleMergerOptions
+from .src.transformers import AsteriskImportError, TransformError
 
 DEFAULT_FILE_NAME = "__stdin__.py"
 PROG_NAME = "python-compiler"
