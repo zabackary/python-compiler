@@ -5,7 +5,7 @@ from _ast import Global, Module
 from dataclasses import dataclass
 from typing import Any
 
-from .options import ModuleMergerOptions
+from .options import CompilerOptions
 
 python_invalid_character_re = re.compile(r"[^A-Za-z0-9_]")
 
@@ -94,9 +94,9 @@ class ModuleTransformer(ast.NodeTransformer):
     imports: list[FoundImport]
     argument_import_names: list[str]
     name: str
-    options: ModuleMergerOptions
+    options: CompilerOptions
 
-    def __init__(self, imports: list[FoundImport], argument_import_names: list[str], name: str, options: ModuleMergerOptions) -> None:
+    def __init__(self, imports: list[FoundImport], argument_import_names: list[str], name: str, options: CompilerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name

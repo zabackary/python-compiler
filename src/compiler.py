@@ -1,16 +1,16 @@
 import ast
 
 from . import exporthelper, graph
-from .options import ModuleMergerOptions
+from .options import CompilerOptions
 from .processedmodule import ProcessedModule
 
 
 class Compiler:
     source: str
     path: str
-    options: ModuleMergerOptions
+    options: CompilerOptions
 
-    def __init__(self, source: str, path: str, options: ModuleMergerOptions = ModuleMergerOptions()) -> None:
+    def __init__(self, source: str, path: str, options: CompilerOptions = CompilerOptions()) -> None:
         self.source = source
         self.path = path
         self.options = options

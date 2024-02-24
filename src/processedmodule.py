@@ -5,7 +5,7 @@ import sys
 from importlib import util as import_utils
 
 from .exporthelper import EXPORT_HELPER_NAME
-from .options import ModuleMergerOptions
+from .options import CompilerOptions
 from .transformers import (FoundImport, ImportVisitor, ModuleTransformer,
                            TransformError, purify_identifier)
 
@@ -55,9 +55,9 @@ class ProcessedModule:
     imports: list[FoundImport]
     path: str
     name_generator: ModuleUniqueIdentifierGenerator
-    options: ModuleMergerOptions
+    options: CompilerOptions
 
-    def __init__(self, source: str | None, path: str, imported_name: str, options: ModuleMergerOptions) -> None:
+    def __init__(self, source: str | None, path: str, imported_name: str, options: CompilerOptions) -> None:
         self.options = options
         if path == "built-in":
             self.name = f"built-in:{imported_name}"
@@ -80,7 +80,7 @@ class ProcessedModule:
                     self.imports.append(item)
 
     @classmethod
-    def resolve(cls, module: str, context_path: str, options: ModuleMergerOptions):
+    def resolve(cls, module: str, context_path: str, options: CompilerOptions):
         old_path = sys.path.copy()
         # this assumes that the directory of this current file is always the first
         # search path
