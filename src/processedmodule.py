@@ -146,8 +146,8 @@ class ProcessedModule:
         """
         names = self._globals_names(module)
         return ast.Dict(
-            keys=map(lambda a: ast.Constant(value=a), names),
-            values=map(lambda a: ast.Name(id=a, ctx=ast.Load()), names)
+            keys=[ast.Constant(value=name) for name in names],
+            values=[ast.Name(id=name, ctx=ast.Load()) for name in names]
         )
 
     def generate_factory_ast(self) -> ast.FunctionDef | ast.Import:
@@ -306,8 +306,7 @@ class ProcessedModule:
                 name=self.name_generator.get_factory(),
                 args=ast.arguments(
                     posonlyargs=[],
-                    args=list(map(lambda item: ast.arg(
-                        arg=item), argument_import_names)),
+                    args=[ast.arg(arg=item) for item in argument_import_names],
                     defaults=[],
                     kwonlyargs=[]
                 ),
@@ -322,13 +321,10 @@ class ProcessedModule:
                     id=self.name_generator.get_factory(),
                     ctx=ast.Load()
                 ),
-                args=list(map(
-                    lambda a: ast.Name(
-                        id=a,
-                        ctx=ast.Load()
-                    ),
-                    argument_imports
-                )),
+                args=[ast.Name(
+                    id=name,
+                    ctx=ast.Load()
+                ) for name in argument_imports],
                 keywords=[]
             ))
         else:
@@ -342,13 +338,11 @@ class ProcessedModule:
                         id=self.name_generator.get_factory(),
                         ctx=ast.Load()
                     ),
-                    args=list(map(
-                        lambda a: ast.Name(
-                            id=a,
+                    args=[
+                        ast.Name(
+                            id=name,
                             ctx=ast.Load()
-                        ),
-                        argument_imports
-                    )),
+                        ) for name in argument_imports],
                     keywords=[]
                 )
             )

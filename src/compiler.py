@@ -68,11 +68,10 @@ class Compiler:
                 module = dependency_tree_modules[dependency]
                 output.append(module.generate_factory_ast())
                 output.append(module.generate_evaluated_factory_ast(
-                    list(map(
-                        lambda a: dependency_tree_modules[a].name_generator.get_evaluated_factory(
-                        ),
-                        dependency_tree_edges[module.path]
-                    ))
+                    [
+                        dependency_tree_modules[module].name_generator.get_evaluated_factory(
+                        ) for module in dependency_tree_edges[module.path]
+                    ],
                 ))
 
             # put the output into a Module
