@@ -112,9 +112,12 @@ def main(argv: list[str]):
                     plugins=plugins
                 ))()
             if args.json:
-                args.output.write(json.dumps({
-                    "output": merged
-                }))
+                if args.output is sys.stdout:
+                    args.output.write(json.dumps({
+                        "output": merged
+                    }))
+                else:
+                    args.output.write(merged)
             else:
                 args.output.write(merged)
         except errors.CircularDependencyError:
