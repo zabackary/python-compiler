@@ -75,6 +75,28 @@ does not need to be a real path, but it's used for import resolution.
 
 ## Plugins
 
+### Built-in plugins
+
+Built-in plugins can be imported from the `python-compiler.plugins` module. See
+the docstrings for usage information.
+
+#### MinifyPlugin
+
+Uses `python-minifier` to minify the resulting code after bundling is performed.
+This can reduce the size of the resulting code by a factor of 3 or more,
+depending on the input.
+
+### ConstantsPlugin
+
+Dynamically replaces variable names with content at compile-time. Similar to
+`#IFDEF`s if you're using the C preprocessor.
+
+### PreludePlugin
+
+An easy way to add a snippet of code at the beginning of the output.
+
+### Plugin authoring
+
 Plugins must inherit from [the base `Plugin` class](./src/plugin/plugin.py). An
 example plugin might go something like this:
 
