@@ -84,7 +84,18 @@ def main(argv: list[str]):
         "__COMPILED__": True
     }
     for [constant_name, constant_value] in args.define_constant:
-        constants[constant_name] = constant_value
+        if constant_value.lower() == "true":
+            constants[constant_name] = True
+        elif constant_value.lower() == "false":
+            constants[constant_name] = False
+        else:
+            try:
+                if "." in constant_value:
+                    constants[constant_name] = float(constant_value)
+                else:
+                    constants[constant_name] = int(constant_value)
+            except ValueError:
+                constants[constant_name] = constant_value
     for [constant_name] in args.define:
         constants[constant_name] = 1
     current_time = (" at %s" % time.strftime(
