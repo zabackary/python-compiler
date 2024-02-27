@@ -64,7 +64,7 @@ python_compiler.Compiler(
         # ...
         plugins=[
             # Plugins
-            python_compiler.MinifyPlugin()
+            python_compiler.plugins.MinifyPlugin()
         ]
     )
 )
