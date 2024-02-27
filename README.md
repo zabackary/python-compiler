@@ -64,7 +64,7 @@ python_compiler.Compiler(
         # ...
         plugins=[
             # Plugins
-            python_compiler.MinifyPlugin()
+            python_compiler.plugins.MinifyPlugin()
         ]
     )
 )
@@ -86,12 +86,12 @@ Uses `python-minifier` to minify the resulting code after bundling is performed.
 This can reduce the size of the resulting code by a factor of 3 or more,
 depending on the input.
 
-### ConstantsPlugin
+#### ConstantsPlugin
 
 Dynamically replaces variable names with content at compile-time. Similar to
 `#IFDEF`s if you're using the C preprocessor.
 
-### PreludePlugin
+#### PreludePlugin
 
 An easy way to add a snippet of code at the beginning of the output.
 

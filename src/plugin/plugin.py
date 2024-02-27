@@ -2,6 +2,8 @@ import ast
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    # only import these for the types because these two modules both depend on
+    # `options.py` which depends on this file
     from ..processedmodule import ModuleUniqueIdentifierGenerator
     from ..transformers import FoundImport
 
@@ -14,7 +16,8 @@ class Plugin:
         """ A hook run before name translation is performed and modules are bundled
 
         Note: this is run even for modules outside the current project, like
-        library files. If you don't 
+        library files. If you don't want this to run on those files, use `path`
+        to perform a restriction.
         """
         return module
 
