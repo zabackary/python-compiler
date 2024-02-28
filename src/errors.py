@@ -14,6 +14,10 @@ class GlobalError(TransformError):
     pass
 
 
+class ReservedIdentifierError(TransformError):
+    pass
+
+
 class CircularDependencyError(CompilerError):
     pass
 
