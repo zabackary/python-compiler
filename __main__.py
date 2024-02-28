@@ -123,7 +123,7 @@ def main(argv: list[str]):
                     plugins=plugins
                 ))()
             if args.json:
-                if args.output is sys.stdout:
+                if args.output.name == "<stdout>":
                     args.output.write(json.dumps({
                         "output": merged
                     }))
