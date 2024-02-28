@@ -20,14 +20,13 @@ class ConstantsTransformer(ast.NodeTransformer):
 
     def visit_Module(self, node: Module) -> Any:
         self.top_level_statements = node.body
-        self.generic_visit(node)
-        return node
+        return self.generic_visit(node)
 
     def visit_Name(self, node: ast.Name) -> Any:
         if isinstance(node.ctx, ast.Load):
             if node.id in self.constants:
                 return ast.Constant(value=self.constants[node.id])
-        return node
+        return self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> Any:
         top_level = node in self.top_level_statements
@@ -42,10 +41,13 @@ class ConstantsTransformer(ast.NodeTransformer):
                 else:
                     raise AssignmentToConstantError(
                         f"assignment to compile-time constant '{target.id}' on line {target.lineno} col {target.col_offset}")
-        # delete the assignment if there's nothing it's assigning to
+        # change the assignment to a expr if there's nothing it's assigning to
         if len(node.targets) == 0:
-            return None
-        return node
+            # if it's a constant, we know for sure there are no side effects
+            if isinstance(node.value, ast.Constant):
+                return None
+            return self.generic_visit(ast.Expr(value=node.value))
+        return self.generic_visit(node)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> Any:
         top_level = node in self.top_level_statements
@@ -59,7 +61,7 @@ class ConstantsTransformer(ast.NodeTransformer):
             else:
                 raise AssignmentToConstantError(
                     f"assignment to compile-time constant '{node.target.id}' on line {node.target.lineno} col {node.target.col_offset}")
-        return node
+        return self.generic_visit(node)
 
 
 class ConstantsPlugin(Plugin):

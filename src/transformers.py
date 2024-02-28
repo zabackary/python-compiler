@@ -121,7 +121,7 @@ class ModuleTransformer(ast.NodeTransformer):
                     ],
                     value=ast.Name(id=resolved_argument, ctx=ast.Load())
                 ))
-        return output
+        return [self.generic_visit(item) for item in output]
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
         module = node.module
@@ -156,13 +156,14 @@ class ModuleTransformer(ast.NodeTransformer):
                     ctx=ast.Load()
                 )
             ))
-        return output
+        return [self.generic_visit(item) for item in output]
 
     def visit_Name(self, node: ast.Name) -> Any:
         if isinstance(node.ctx, ast.Load):
             if node.id == "__name__":
                 return ast.Constant(value=self.name)
-        return node
+        # let other methods run their visitors
+        return self.generic_visit(node)
 
     def visit_Global(self, node: Global) -> Any:
         raise GlobalError(
