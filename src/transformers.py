@@ -162,9 +162,10 @@ class ModuleTransformer(ast.NodeTransformer):
         if isinstance(node.ctx, ast.Load):
             if node.id == "__name__":
                 return ast.Constant(value=self.name)
-        if node.id.startswith("__generated_"):
-            raise ReservedIdentifierError(
-                f"reserved identifier '{node.id}' used on line {node.lineno} col {node.col_offset}")
+        # removed because it fails when run post-parameter transformation
+        # if node.id.startswith("__generated_"):
+        #     raise ReservedIdentifierError(
+        #         f"reserved identifier '{node.id}' used on line {node.lineno} col {node.col_offset}")
         # let other methods run their visitors
         return self.generic_visit(node)
 
