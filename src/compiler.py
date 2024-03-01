@@ -42,8 +42,8 @@ class Compiler:
             try:
                 dependencies = list(reversed(graph.Graph(
                     dependency_tree_edges).topological_sort()))
-            except graph.TopologicalSortError:
-                raise CircularDependencyError()
+            except graph.TopologicalSortError as err:
+                raise CircularDependencyError(err.remaining_modules)
 
             output: list[ast.AST] = []
 

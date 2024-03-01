@@ -4,7 +4,7 @@ import os
 import sys
 from importlib import util as import_utils
 
-from .errors import TransformError
+from .errors import ImportResolutionError, TransformError
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import CompilerOptions
 from .transformers import (FoundImport, ImportVisitor, ModuleTransformer,
@@ -112,14 +112,14 @@ class ProcessedModule:
 
         # use find_spec's resolution or error if not found
         if spec is None or spec.origin is None:
-            raise ImportError(f"failed to resolve import {module}")
+            raise ImportResolutionError(path=context_path, module=module)
         else:
             try:
                 with open(spec.origin, "r") as file:
                     return cls(file.read(), spec.origin, module, options)
-            except OSError as err:
-                raise ImportError(
-                    f"failed to import module {module} from path {spec.origin}: {str(err)}")
+            except OSError:
+                raise ImportResolutionError(
+                    path=context_path, module=module, os_error_read_path=spec.origin)
 
     def _globals_names(self, module: ast.Module) -> list[str]:
         names: list[str] = []
@@ -196,9 +196,12 @@ class ProcessedModule:
                     self.options.short_generated_names, self.options.hash_length))
 
             transformed_module: ast.Module = ModuleTransformer(
+                self.path,
                 self.imports,
                 argument_import_names,
-                self.name, self.options).visit(self.module)
+                self.name,
+                self.options
+            ).visit(self.module)
 
             body: list[ast.AST] = []
             body.extend(transformed_module.body)

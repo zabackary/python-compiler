@@ -8,18 +8,9 @@ from .src import Compiler, CompilerOptions, errors, plugin
 
 DEFAULT_FILE_NAME = "__stdin__.py"
 PROG_NAME = "python-compiler"
-ERRORS = {
-    "circular-deps": "failed to compile due to circular dependencies",
-    "recursion": "failed to compile due to excessive amount of nested modules",
-    "asterisk-import": "failed to compile because of asterisk import in %s",
-    "transform": "%s",
-    "assignment-to-constant": "failed to compile due to assignment to constant: %s",
-    "internal": "internal compiler error: %s\nThis is a bug. If you wouldn't mind, please report it at https://github.com/zabackary/python-compiler/issues/"
-}
 
 
-def format_error(name: str, output_json: bool = False, args: tuple[str, ...] = ()):
-    msg = ERRORS[name] % args
+def format_error(name: str, msg: str, output_json: bool = False):
     if output_json:
         return json.dumps({
             "error": True,
@@ -27,7 +18,11 @@ def format_error(name: str, output_json: bool = False, args: tuple[str, ...] = (
             "msg": msg
         })
     else:
-        return f"{PROG_NAME}: error: {msg}"
+        return f"{errors._terminal_colors.BOLD}{PROG_NAME}: error({errors._terminal_colors.FAIL}{name}{errors._terminal_colors.ENDC}{errors._terminal_colors.BOLD}):{errors._terminal_colors.ENDC} {msg}"
+
+
+def format_compiler_error(error: errors.CompilerError, output_json: bool = False):
+    return format_error(error.errcode, str(error), output_json)
 
 
 def main(argv: list[str]):
@@ -131,36 +126,14 @@ def main(argv: list[str]):
                     args.output.write(merged)
             else:
                 args.output.write(merged)
-        except errors.CircularDependencyError:
+        except errors.CompilerError as err:
             print(
-                format_error("circular-deps", args.json),
+                format_compiler_error(err, args.json),
                 file=sys.stderr)
             sys.exit(1)
-        except errors.AsteriskImportError as e:
+        except plugin.constants.AssignmentToConstantError as err:
             print(
-                format_error("asterisk-import", args.json, e.args),
-                file=sys.stderr)
-            sys.exit(1)
-        except errors.TransformError as e:
-            # Lots of the above errors are subclasses of a generic
-            # TransformError, so this should be last.
-            print(
-                format_error("transform", args.json, e.args),
-                file=sys.stderr)
-            sys.exit(1)
-        except errors.NestedModuleRecursionError:
-            print(
-                format_error("recursion", args.json),
-                file=sys.stderr)
-            sys.exit(1)
-        except errors.InternalCompilerError as e:
-            print(
-                format_error("internal", args.json, e.args),
-                file=sys.stderr)
-            sys.exit(1)
-        except plugin.constants.AssignmentToConstantError as e:
-            print(
-                format_error("assignment-to-constant", args.json, e.args),
+                format_error("assignment-to-constant", str(err), args.json),
                 file=sys.stderr)
             sys.exit(1)
 

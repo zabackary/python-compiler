@@ -63,7 +63,7 @@ class ImportVisitor(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> Any:
         if node.module is None:
-            raise TypeError("ImportFrom module is None")
+            raise InternalCompilerError("ImportFrom module is None")
         self.imports.append(
             FoundImport(
                 module=node.module,
@@ -84,13 +84,15 @@ class ModuleTransformer(ast.NodeTransformer):
     imports: list[FoundImport]
     argument_import_names: list[str]
     name: str
+    path: str
     options: CompilerOptions
 
-    def __init__(self, imports: list[FoundImport], argument_import_names: list[str], name: str, options: CompilerOptions) -> None:
+    def __init__(self, path: str, imports: list[FoundImport], argument_import_names: list[str], name: str, options: CompilerOptions) -> None:
         self.imports = imports
         self.argument_import_names = argument_import_names
         self.name = name
         self.options = options
+        self.path = path
         super().__init__()
 
     def _resolve_module_argument_identifier(self, module_name: str) -> str:
@@ -133,13 +135,18 @@ class ModuleTransformer(ast.NodeTransformer):
             return None
         if module is None:
             raise InternalCompilerError(
-                f"ImportFrom module is None on line {node.lineno}")
+                f"ImportFrom module is None")
         resolved_argument = self._resolve_module_argument_identifier(
             module)
         output: list[ast.Assign | ast.Import] = []
         for alias in node.names:
             if alias.name == "*":
-                raise AsteriskImportError(self.name)
+                raise AsteriskImportError(
+                    module=module,
+                    path=self.path,
+                    lineno=node.lineno,
+                    colno=node.col_offset
+                )
             output.append(ast.Assign(
                 targets=[
                     ast.Name(
@@ -166,10 +173,9 @@ class ModuleTransformer(ast.NodeTransformer):
         # (generated ones don't), then raise
         if hasattr(node, "lineno") and node.id.startswith("__generated_"):
             raise ReservedIdentifierError(
-                f"reserved identifier '{node.id}' used on line {node.lineno} col {node.col_offset}")
+                node.id, self.path, node.lineno, node.col_offset)
         # let other methods run their visitors
         return self.generic_visit(node)
 
     def visit_Global(self, node: Global) -> Any:
-        raise GlobalError(
-            f"global statements aren't supported on line {node.lineno} col {node.col_offset}")
+        raise GlobalError(self.path, node.lineno, node.col_offset)

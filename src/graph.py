@@ -2,7 +2,13 @@ import unittest
 
 
 class TopologicalSortError(Exception):
-    pass
+    remaining_modules: list[str]
+
+    def __init__(self, remaining_modules: list[str]) -> None:
+        self.remaining_modules = remaining_modules
+
+    def __str__(self) -> str:
+        return "could not topologically sort: circular references"
 
 # I used https://mohammad-imran.medium.com/understanding-topological-sorting-with-kahns-algo-8af5a588dd0e
 # for a clear Kahn's algorithm description and implemented it by hand.
@@ -22,7 +28,6 @@ class Graph:
             for node in end:
                 indegree[node] = indegree.setdefault(node, 0) + 1
 
-        visited = 0
         result: list[str] = []
         queue: list[str] = []
         for node in indegree:
@@ -32,15 +37,14 @@ class Graph:
         while len(queue) > 0:
             item = queue.pop()
             result.append(item)
-            visited += 1
             for node in self.outgoing_edge_list[item]:
                 indegree[node] -= 1
                 if indegree[node] == 0:
                     queue.append(node)
 
-        if visited != len(self.outgoing_edge_list):
+        if len(result) != len(self.outgoing_edge_list):
             raise TopologicalSortError(
-                "could not topologically sort: circular references")
+                list(self.outgoing_edge_list.keys() - result))
 
         return result
 

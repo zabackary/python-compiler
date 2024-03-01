@@ -2,20 +2,37 @@ import ast
 from ast import Module
 from typing import Any
 
+from ..errors import _terminal_colors
 from .plugin import Plugin
 
 
 class AssignmentToConstantError(Exception):
-    pass
+    path: str
+    lineno: int
+    colno: int
+    ident: str
+
+    errcode = "assignment-to-constant"
+
+    def __init__(self, ident: str, path: str, lineno: int, colno: int) -> None:
+        self.ident = ident
+        self.path = path
+        self.lineno = lineno
+        self.colno = colno
+
+    def __str__(self) -> str:
+        return f"illegal assignment to a defined compiler constant\n  {_terminal_colors.OKBLUE}{_terminal_colors.BOLD}note:{_terminal_colors.ENDC} the identifier was named {_terminal_colors.OKCYAN}{self.ident}{_terminal_colors.ENDC}\n  at {self.path} {self.lineno}:{self.colno}"
 
 
 class ConstantsTransformer(ast.NodeTransformer):
     top_level_statements: list[ast.stmt]
     constants: dict[str, str | bool | int | float]
+    path: str
 
-    def __init__(self, constants: dict[str, str | bool | int | float]) -> None:
+    def __init__(self, constants: dict[str, str | bool | int | float], path: str) -> None:
         self.constants = constants
         self.top_level_statements = []
+        self.path = path
         super().__init__()
 
     def visit_Module(self, node: Module) -> Any:
@@ -40,7 +57,7 @@ class ConstantsTransformer(ast.NodeTransformer):
                     node.targets.remove(target)
                 else:
                     raise AssignmentToConstantError(
-                        f"assignment to compile-time constant '{target.id}' on line {target.lineno} col {target.col_offset}")
+                        target.id, self.path, node.lineno, node.col_offset)
         # change the assignment to a expr if there's nothing it's assigning to
         if len(node.targets) == 0:
             # if it's a constant, we know for sure there are no side effects
@@ -60,7 +77,7 @@ class ConstantsTransformer(ast.NodeTransformer):
                 return None
             else:
                 raise AssignmentToConstantError(
-                    f"assignment to compile-time constant '{node.target.id}' on line {node.target.lineno} col {node.target.col_offset}")
+                    node.target.id, self.path, node.lineno, node.col_offset)
         return self.generic_visit(node)
 
 
@@ -71,4 +88,4 @@ class ConstantsPlugin(Plugin):
         self.constants = constants
 
     def hook_module(self, path: str, module: Module) -> Module:
-        return ConstantsTransformer(self.constants).visit(module)
+        return ConstantsTransformer(self.constants, path).visit(module)
