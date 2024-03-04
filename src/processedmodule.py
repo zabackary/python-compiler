@@ -4,7 +4,7 @@ import os
 import sys
 from importlib import util as import_utils
 
-from .errors import ImportResolutionError, TransformError
+from .errors import ImportResolutionError, ModuleSyntaxError, TransformError
 from .exporthelper import EXPORT_HELPER_NAME
 from .options import CompilerOptions
 from .transformers import (FoundImport, ImportVisitor, ModuleTransformer,
@@ -67,8 +67,11 @@ class ProcessedModule:
         else:
             self.name = os.path.splitext(os.path.basename(path))[0]
         self.path = f"built-in:{imported_name}" if path == "built-in" else path
-        self.module = ast.parse(
-            source, self.name) if source is not None else None
+        try:
+            self.module = ast.parse(
+                source, self.name) if source is not None else None
+        except SyntaxError as err:
+            raise ModuleSyntaxError(path, err)
         self.imports = []
         self.name_generator = ModuleUniqueIdentifierGenerator(
             self.name, self.path, options.short_generated_names, options.hash_length)

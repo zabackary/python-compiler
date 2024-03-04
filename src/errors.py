@@ -141,3 +141,17 @@ class NestedModuleRecursionError(CompilerError):
 
     def __str__(self) -> str:
         return f"excessive amount of nested modules\n  {_terminal_colors.OKGREEN}{_terminal_colors.BOLD}help:{_terminal_colors.ENDC} this means your project is too big for python-compiler to handle\n  {_terminal_colors.OKBLUE}{_terminal_colors.BOLD}note:{_terminal_colors.ENDC} this is caused by a RecursionError\n  {_terminal_colors.OKGREEN}{_terminal_colors.BOLD}help:{_terminal_colors.ENDC} try calling python-compiler as a library and using sys.setrecursionlimit to set a higher limit if needed"
+
+
+class ModuleSyntaxError(TransformError):
+    err: SyntaxError
+    path: str
+
+    errcode = "syntax"
+
+    def __init__(self, path: str, err: SyntaxError) -> None:
+        self.path = path
+        self.err = err
+
+    def __str__(self) -> str:
+        return f"syntax error while parsing module\n  {_terminal_colors.OKBLUE}{_terminal_colors.BOLD}note:{_terminal_colors.ENDC} caused by {self.err.__class__.__name__}: {self.err.msg}\n  at {self.path} {self.err.lineno}:{self.err.offset}"
