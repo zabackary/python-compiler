@@ -68,8 +68,15 @@ class ProcessedModule:
             self.name = os.path.splitext(os.path.basename(path))[0]
         self.path = f"built-in:{imported_name}" if path == "built-in" else path
         try:
-            self.module = ast.parse(
-                source, self.name) if source is not None else None
+            if source is None:
+                # module is probably built-in or for some reason we don't have
+                # its raw Python source
+                self.module = None
+            else:
+                self.module = ast.parse(source, self.name)
+                # let plugins do their thing
+                for plugin in self.options.plugins:
+                    self.module = plugin.hook_module(self.path, self.module)
         except SyntaxError as err:
             raise ModuleSyntaxError(path, err)
         self.imports = []
@@ -188,10 +195,6 @@ class ProcessedModule:
         else:
             # we have the code, so let's transform it
             argument_import_names: list[str] = []
-
-            # let plugins do their thing
-            for plugin in self.options.plugins:
-                self.module = plugin.hook_module(self.path, self.module)
 
             # get the argument names of the imports
             for item in self.imports:
