@@ -99,6 +99,7 @@ def main(argv: list[str]):
         try:
             plugins: list[plugin.Plugin] = []
             plugins.append(plugin.ConstantsPlugin(constants=constants))
+            plugins.append(plugin.SimplifyIfPlugin())
             if args.prelude is not None:
                 plugins.append(plugin.PreludePlugin(prelude=args.prelude))
             if args.minify:

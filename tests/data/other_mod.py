@@ -1,4 +1,2 @@
-def hello_world():
-    return "Hello, world!"
-
-def parse_error():
+def hello_world(msg="Hello, world!"):
+    return msg
