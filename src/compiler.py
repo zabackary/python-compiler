@@ -47,13 +47,6 @@ class Compiler:
 
             output: list[ast.AST] = []
 
-            # add the docstring at the top
-            if self.options.docstring != None:
-                output.append(ast.Expr(
-                    ast.Constant(
-                        value=self.options.docstring)
-                ))
-
             # add helpers needed by the module factories for each mode
             if self.options.export_dictionary_mode == "munch":
                 output.append(exporthelper.get_export_helper(use_munch=True))
@@ -83,6 +76,13 @@ class Compiler:
             # let plugins do their thing
             for plugin in self.options.plugins:
                 output_ast = plugin.hook_output(output_ast)
+
+            # add the docstring at the top
+            if self.options.docstring != None:
+                output.insert(0, ast.Expr(
+                    ast.Constant(
+                        value=self.options.docstring)
+                ))
 
             # actually generate the output code string
             return ast.unparse(ast.fix_missing_locations(output_ast))
