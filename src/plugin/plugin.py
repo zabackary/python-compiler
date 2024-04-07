@@ -52,3 +52,7 @@ class Plugin:
     def hook_output(self, module: ast.Module) -> ast.Module:
         """ A hook called just prior to the end of code generation. """
         return module
+
+    def hook_unparse(self, module: ast.Module) -> str | None:
+        """ A hook called to customize unparsing. There can only be one of these. """
+        return None

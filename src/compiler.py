@@ -1,4 +1,5 @@
 import ast
+import warnings
 
 from . import exporthelper, graph
 from .errors import CircularDependencyError, NestedModuleRecursionError
@@ -85,6 +86,19 @@ class Compiler:
                 ))
 
             # actually generate the output code string
-            return ast.unparse(ast.fix_missing_locations(output_ast))
+            output_str = None
+            for plugin in self.options.plugins:
+                unparsed = plugin.hook_unparse(output_ast)
+                if unparsed is not None:
+                    if output_str is not None:
+                        warnings.warn(
+                            "The AST unparse operation was overwritten "
+                            "multiple times, resulting in only the last "
+                            "plugin's hook_unparse hook being used."
+                        )
+                    output_str = unparsed
+            if output_str is None:
+                output_str = ast.unparse(ast.fix_missing_locations(output_ast))
+            return output_str
         except RecursionError:
             raise NestedModuleRecursionError()

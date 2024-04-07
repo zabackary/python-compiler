@@ -169,7 +169,9 @@ class ProcessedModule:
                     posonlyargs=[],
                     args=[],
                     defaults=[],
-                    kwonlyargs=[]
+                    kwonlyargs=[],
+                    kwargs=[],
+                    kw_defaults=[],
                 ),
                 body=[
                     ast.Import(
@@ -314,9 +316,12 @@ class ProcessedModule:
             return ast.FunctionDef(
                 name=self.name_generator.get_factory(),
                 args=ast.arguments(
-                    posonlyargs=[],
-                    args=[ast.arg(arg=item) for item in argument_import_names],
+                    posonlyargs=[ast.arg(arg=item)
+                                 for item in argument_import_names],
+                    args=[],
                     defaults=[],
+                    kwargs=[],
+                    kw_defaults=[],
                     kwonlyargs=[]
                 ),
                 body=body,
