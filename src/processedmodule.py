@@ -316,9 +316,9 @@ class ProcessedModule:
             return ast.FunctionDef(
                 name=self.name_generator.get_factory(),
                 args=ast.arguments(
-                    posonlyargs=[ast.arg(arg=item)
-                                 for item in argument_import_names],
-                    args=[],
+                    posonlyargs=[],
+                    args=[ast.arg(arg=item)
+                          for item in argument_import_names],
                     defaults=[],
                     kwargs=[],
                     kw_defaults=[],
