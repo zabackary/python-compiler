@@ -61,7 +61,7 @@ python_compiler.Compiler(
     source=input(),
     path="/path/to/source/file",
     options=python_compiler.CompilerOptions(
-        # ...
+        # ... (see docstring)
         plugins=[
             # Plugins
             python_compiler.plugins.MinifyPlugin()
@@ -70,8 +70,10 @@ python_compiler.Compiler(
 )
 ```
 
-For more examples, see the [CLI source code](./__main__.py). Note that `path`
-does not need to be a real path, but it's used for import resolution.
+For more examples, see the [CLI source code](./__main__.py) for example usage.
+Note that `path` does not need to be a real path, but it's used for import
+resolution. The library is mostly documented using docstrings, so just read the
+source code for more help.
 
 ## Plugins
 
@@ -89,7 +91,7 @@ depending on the input.
 #### ConstantsPlugin
 
 Dynamically replaces variable names with content at compile-time. Similar to
-`#IFDEF`s if you're using the C preprocessor.
+`#DEFINE`s if you're using the C preprocessor.
 
 #### PreludePlugin
 
